@@ -81,7 +81,12 @@ class GenerateVisualizer(bpy.types.Operator):
         scene.frame_current = 1
         attack_time = scene.bz_attack_time
         release_time = scene.bz_release_time
-        bar_shape = scene.bz_bar_shape
+
+        if not scene.bz_use_custom_mesh:
+            bar_shape = scene.bz_bar_shape
+            vertices = self.getVertices(bar_shape)
+            faces = self.getFaces(bar_shape)
+
         bar_count = scene.bz_bar_count
 
         bar_width = scene.bz_bar_width / self.base_size
@@ -103,9 +108,6 @@ class GenerateVisualizer(bpy.types.Operator):
         number_format = "%0" + digits + "d"
         line_start = -(bar_count * spacing) / 2 + spacing / 2
         preview_coef = 8 * math.pi / bar_count
-
-        vertices = self.getVertices(bar_shape)
-        faces = self.getFaces(bar_shape)
 
         arc_direction = -1
         if flip_direction:
@@ -145,14 +147,18 @@ class GenerateVisualizer(bpy.types.Operator):
             formatted_number = number_format % i
             name = 'Bar ' + formatted_number
 
-            mesh = bpy.data.meshes.new(name)
-            bar = bpy.data.objects.new(name, mesh)
+            if not scene.bz_use_custom_mesh:
+                mesh = bpy.data.meshes.new(name)
+                mesh.from_pydata(vertices, [], faces)
+                mesh.update()
+                bar = bpy.data.objects.new(name, mesh)
+            else:
+                bar = bpy.data.objects.new(name, scene.bz_custom_mesh.copy())
+
             scene.collection.children[collection_name].objects.link(bar)
 
             bar.select_set(True)
             bpy.context.view_layer.objects.active = bar
-            mesh.from_pydata(vertices, [], faces)
-            mesh.update()
 
             loc = [0.0, 0.0, 0.0]
 

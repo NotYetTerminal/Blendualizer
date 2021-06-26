@@ -50,7 +50,7 @@ class PropertiesUi(bpy.types.Panel):
         row = layout.row()
         split = row.split()
         col_a = split.column(align=True)
-        col_a.label(text="Bar Name:")
+        col_a.label(text="Bar Set Name:")
         col_b = split.column(align=True)
         col_b.prop(scene, "bz_custom_name")
 
@@ -60,6 +60,14 @@ class PropertiesUi(bpy.types.Panel):
         col_a.label(text="Bar Shape:")
         col_b = split.column(align=True)
         col_b.prop(scene, "bz_bar_shape")
+        col_b.enabled = not scene.bz_use_custom_mesh
+        row = layout.row()
+        split = row.split()
+        col_a = split.column(align=True)
+        col_a.prop(scene, "bz_use_custom_mesh")
+        col_b = split.column(align=True)
+        col_b.prop(scene, "bz_custom_mesh")
+        col_b.enabled = scene.bz_use_custom_mesh
 
         row = layout.row()
         row.prop(scene, "bz_bar_count")
@@ -134,9 +142,6 @@ class PropertiesUi(bpy.types.Panel):
         row = layout.row()
         row.operator("object.bz_align_camera", icon="CAMERA_DATA")
 
-        row = layout.row()
-        row.prop_search(scene, "material_used", bpy.data, "materials", text="Material")
-
         '''
         #column = layout.column()
         #for i in range(scene.bz_bar_count):
@@ -183,13 +188,13 @@ class PropertyGroup(bpy.types.PropertyGroup):
     obj_name: bpy.props.StringProperty(name='Object name to be affected')
 '''
 
+
 def initprop():
     '''bpy.types.Scene.bob = bpy.props.StringProperty()
 
     bpy.utils.register_class(PropertyGroup)
     bpy.types.Scene.bar_collection = bpy.props.CollectionProperty(type=PropertyGroup)
     bpy.types.Scene.bar_collection_index = bpy.props.IntProperty(min = -1, default = -1)'''
-
 
     bpy.types.Scene.bz_audiofile = bpy.props.StringProperty(
         name="Audio Path",
@@ -236,6 +241,18 @@ def initprop():
                ("CUBOID", "Cuboid", "", "", 3),
                ("PYRAMID", "Pyramid", "", "", 4)
                ])
+
+    bpy.types.Scene.bz_use_custom_mesh = bpy.props.BoolProperty(
+        name="Custom Mesh",
+        description="Select mesh",
+        default=False
+    )
+
+    bpy.types.Scene.bz_custom_mesh = bpy.props.PointerProperty(
+        name="",
+        description="Mesh to use",
+        type=bpy.types.Mesh
+    )
 
     bpy.types.Scene.bz_bar_count = bpy.props.IntProperty(
         name="Bar Count",
@@ -313,9 +330,10 @@ def initprop():
         default=False
     )
 
-    bpy.types.Scene.bz_material = bpy.props.StringProperty(
-        name="Material Used",
-        description="Material to be applied to bars"
+    bpy.types.Scene.bz_material = bpy.props.PointerProperty(
+        name="",
+        description="Material to be applied to bars",
+        type=bpy.types.Material
     )
 
     # color_input_description = "Color applied to bars after visualizer is generated"
@@ -348,6 +366,8 @@ classes = [
     RENDER_OT_make_previews,
     RENDER_OT_remove_bz_audio
 ]
+
+
 # OBJECT_OT_add_remove_Collection_Items
 
 def register():
