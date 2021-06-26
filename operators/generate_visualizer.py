@@ -6,39 +6,6 @@ import colorsys
 from .tools.update_progress import update_progress
 
 
-def make_color(name, rgb, emission_strength):
-    if name in bpy.data.materials:
-        material = bpy.data.materials[name]
-    else:
-        material = bpy.data.materials.new(name=name)
-    material.use_nodes = True
-
-    nodes = material.node_tree.nodes
-    for node in nodes:
-        nodes.remove(node)
-
-    node_lightpath = nodes.new(type='ShaderNodeLightPath')
-    node_lightpath.location = [-200, 100]
-
-    node_emission = nodes.new(type='ShaderNodeEmission')
-    node_emission.inputs[0].default_value = (rgb[0], rgb[1], rgb[2], 1)
-    node_emission.inputs[1].default_value = emission_strength
-    node_emission.location = [0, -50]
-
-    node_mix = nodes.new(type='ShaderNodeMixShader')
-    node_mix.location = [200, 0]
-
-    node_output = nodes.new(type='ShaderNodeOutputMaterial')
-    node_output.location = [400, 0]
-
-    links = material.node_tree.links
-    links.new(node_lightpath.outputs[0], node_mix.inputs[0])
-    links.new(node_emission.outputs[0], node_mix.inputs[2])
-    links.new(node_mix.outputs[0], node_output.inputs[0])
-
-    return material
-
-
 def get_context_area(context, context_dict, area_type='GRAPH_EDITOR',
                      context_screen=False):
     """
@@ -66,7 +33,7 @@ def get_context_area(context, context_dict, area_type='GRAPH_EDITOR',
     return None
 
 
-class RENDER_OT_generate_visualizer(bpy.types.Operator):
+class GenerateVisualizer(bpy.types.Operator):
     bl_idname = "object.bz_generate"
     bl_label = "(re)Generate Visualizer"
     bl_description = "Generates visualizer bars and animation"
@@ -147,21 +114,6 @@ class RENDER_OT_generate_visualizer(bpy.types.Operator):
         arc_angle = arc_angle_deg / 360 * 2 * math.pi
         arc_center = -arc_center_deg / 360 * 2 * math.pi
         arc_start = arc_center - arc_direction * arc_angle / 2
-
-        color_style = scene.bz_color_style
-        emission_strength = scene.bz_emission_strength
-
-        if color_style == "SINGLE_COLOR":
-            material = make_color('bz_color', scene.bz_color1, emission_strength)
-        else:
-            color_dict = self.create_color_dictionary(scene)
-            color_pattern = self.parse_color_pattern_input(scene)
-            color_pattern_length = len(color_pattern)
-            gradient_interpolation = scene.bz_gradient_interpolation
-
-            if color_pattern_length == 0:
-                self.report({"ERROR"}, "Color Pattern is invalid!")
-                return {"FINISHED"}
 
         note_step = 120.0 / bar_count
         a = 2 ** (1.0 / 12.0)
@@ -251,18 +203,7 @@ class RENDER_OT_generate_visualizer(bpy.types.Operator):
                 active = bpy.context.active_object
                 active.animation_data.action.fcurves[1].lock = True
 
-            if color_style == "PATTERN":
-                color_index = color_pattern[i % color_pattern_length]
-                color = color_dict[color_index]["rgb"]
-                material = make_color('bz_color' + formatted_number, color, emission_strength)
-
-            if color_style == "GRADIENT":
-                progress = (i + 0.5) / bar_count
-                color = self.compute_gradient_color(progress, color_pattern_length, color_pattern, color_dict,
-                                                    gradient_interpolation)
-                material = make_color('bz_color' + formatted_number, color, emission_strength)
-
-            bar.active_material = material
+            bar.active_material = scene.bz_material
 
             if scene.bz_use_sym:
                 mirror_modifier = bar.modifiers.new(name="Mirror", type="MIRROR")
@@ -301,62 +242,3 @@ class RENDER_OT_generate_visualizer(bpy.types.Operator):
         update_progress("Generating Visualizer", 1)
         bpy.context.view_layer.objects.active = None
         return {"FINISHED"}
-
-    def parse_color_pattern_input(self, scene):
-        color_count = scene.bz_color_count
-        color_pattern_user_input = scene.bz_color_pattern
-        scene.bz_color_pattern = re.sub("[^1-9]", "", scene.bz_color_pattern)
-        color_pattern = re.sub("[^1-{0:d}]".format(color_count), "", scene.bz_color_pattern)
-
-        if color_pattern != scene.bz_color_pattern:
-            self.report({"WARNING"}, "Color Pattern: Extra colors are ignored!")
-
-        if color_pattern_user_input != scene.bz_color_pattern:
-            self.report({"WARNING"}, "Color Pattern: Invalid characters were removed!")
-
-        return color_pattern
-
-    def create_color_dictionary(self, scene):
-        color_dict = {
-            "1": {"rgb": scene.bz_color1},
-            "2": {"rgb": scene.bz_color2},
-            "3": {"rgb": scene.bz_color3},
-            "4": {"rgb": scene.bz_color4},
-            "5": {"rgb": scene.bz_color5},
-            "6": {"rgb": scene.bz_color6},
-            "7": {"rgb": scene.bz_color7},
-            "8": {"rgb": scene.bz_color8},
-            "9": {"rgb": scene.bz_color9},
-        }
-
-        for key in color_dict:
-            color_item = color_dict[key]
-            rgb = color_item["rgb"]
-            h, s, v = colorsys.rgb_to_hsv(rgb[0], rgb[1], rgb[2])
-            color_item["hsv"] = [h, s, v]
-            h, l, s = colorsys.rgb_to_hls(rgb[0], rgb[1], rgb[2])
-            color_item["hsl"] = [h, l, s]
-
-        return color_dict
-
-    def compute_gradient_color(self, progress, color_pattern_length, color_pattern, color_dict, gradient_interpolation):
-        pattern_position = progress * (color_pattern_length - 1)
-        start_color_index = color_pattern[math.floor(pattern_position) % color_pattern_length]
-        end_color_index = color_pattern[math.ceil(pattern_position) % color_pattern_length]
-        start_color_dict = color_dict[start_color_index]
-        end_color_dict = color_dict[end_color_index]
-
-        start_color = start_color_dict[gradient_interpolation.lower()]
-        end_color = end_color_dict[gradient_interpolation.lower()]
-        lerped_color = self.lerp_color(start_color, end_color, pattern_position % 1)
-
-        if gradient_interpolation == "RGB":
-            final_color = lerped_color
-        elif gradient_interpolation == "HSV":
-            r, g, b = colorsys.hsv_to_rgb(lerped_color[0], lerped_color[1], lerped_color[2])
-            final_color = [r, g, b]
-        elif gradient_interpolation == "HSL":
-            r, g, b = colorsys.hls_to_rgb(lerped_color[0], lerped_color[1], lerped_color[2])
-            final_color = [r, g, b]
-
-        return final_color
