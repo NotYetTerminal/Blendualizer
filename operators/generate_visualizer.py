@@ -1,7 +1,5 @@
 import bpy
 import math
-import re
-import colorsys
 
 from .tools.update_progress import update_progress
 
@@ -43,7 +41,7 @@ class GenerateVisualizer(bpy.types.Operator):
     @classmethod
     def poll(self, context):
         scene = context.scene
-        if scene.bz_audiofile == "":
+        if scene.bz_audio_file == "":
             return False
         else:
             return True
@@ -102,7 +100,7 @@ class GenerateVisualizer(bpy.types.Operator):
 
         flip_direction = scene.bz_flip_direction
         preview_mode = scene.bz_preview_mode
-        audiofile = bpy.path.abspath(scene.bz_audiofile)
+        audiofile = bpy.path.abspath(scene.bz_audio_file)
 
         digits = str(len(str(bar_count)))
         number_format = "%0" + digits + "d"

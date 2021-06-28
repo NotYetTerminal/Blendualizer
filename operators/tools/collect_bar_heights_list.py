@@ -4,7 +4,7 @@ from .find_fcurve import find_fcurve
 def collect_bar_heights_list(song_path, bar_count, scene):
     """Analyze the song and get the y_scale animation data"""
 
-    scene.bz_audiofile = song_path
+    scene.bz_audio_file = song_path
     scene.bz_bar_count = bar_count
     scene.bz_amplitude = 20
 

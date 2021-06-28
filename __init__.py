@@ -1,6 +1,4 @@
 import bpy
-import os
-import shutil
 
 from .operators import *
 
@@ -134,61 +132,9 @@ class PropertiesUi(bpy.types.Panel):
         row = layout.row()
         row.operator("object.bz_generate", icon="FILE_REFRESH")
 
-        '''
-        #column = layout.column()
-        #for i in range(scene.bz_bar_count):
-        #layout.prop_search(scene, "bob",  scene, "objects")
-        
-        row = layout.row()
-        row.template_list('UI_UL_list', 'bob', scene, "bar_collection", scene, "bar_collection_index")
-        
-        col = row.column(align=True)
-        col.operator("collection.add_remove", icon="ZOOM_IN", text="").add = True
-        col.operator("collection.add_remove", icon="ZOOM_OUT", text="").add = False
-        
-        if scene.bar_collection:
-            entry = scene.bar_collection[scene.bar_collection_index]
-            
-            layout.prop_search(entry, "obj_name", scene, 'objects', text='Object Name')
-            
 
-class OBJECT_OT_add_remove_Collection_Items(bpy.types.Operator):
-    bl_label = "Add or Remove"
-    bl_idname = "collection.add_remove"
-    
-    add : bpy.props.BoolProperty(default = True)
-    
-    def invoke(self, context, event):
-        add = self.add
-        scene = context.scene
-        collection = scene.bar_collection
-        if add:
-            collection.add()
-            scene.bar_collection_index = 0
-        else:
-            index = scene.bar_collection_index
-            scene.bar_collection_index -= 1
-            collection.remove(index)
-        
-        #self.report({'INFO'}, str(scene.bar_collection_index))
-        
-        return {'FINISHED'}
-
-
-class PropertyGroup(bpy.types.PropertyGroup):
-    #name: bpy.props.IntProperty(name='Bar Number', default=0)
-    obj_name: bpy.props.StringProperty(name='Object name to be affected')
-'''
-
-
-def initprop():
-    '''bpy.types.Scene.bob = bpy.props.StringProperty()
-
-    bpy.utils.register_class(PropertyGroup)
-    bpy.types.Scene.bar_collection = bpy.props.CollectionProperty(type=PropertyGroup)
-    bpy.types.Scene.bar_collection_index = bpy.props.IntProperty(min = -1, default = -1)'''
-
-    bpy.types.Scene.bz_audiofile = bpy.props.StringProperty(
+def init_prop():
+    bpy.types.Scene.bz_audio_file = bpy.props.StringProperty(
         name="Audio Path",
         description="Define path of the audio file",
         subtype="FILE_PATH",
@@ -337,16 +283,14 @@ def initprop():
 
 classes = [
     PropertiesUi,
-    RENDER_OT_audio_to_vse,
+    AudioToVse,
     GenerateVisualizer,
-    RENDER_OT_remove_bz_audio
+    RemoveBzAudio
 ]
 
 
-# OBJECT_OT_add_remove_Collection_Items
-
 def register():
-    initprop()
+    init_prop()
 
     from bpy.utils import register_class
     for cls in classes:

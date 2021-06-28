@@ -1,7 +1,8 @@
 import bpy
 import ntpath
 
-class RENDER_OT_audio_to_vse(bpy.types.Operator):
+
+class AudioToVse(bpy.types.Operator):
     bl_idname = "sequencerextra.bz_audio_to_sequencer"
     bl_label = "Add Audio to VSE"
     bl_description = "Adds the audio file to the VSE"
@@ -9,7 +10,7 @@ class RENDER_OT_audio_to_vse(bpy.types.Operator):
     @classmethod
     def poll(self, context):
         scene = context.scene
-        if scene.bz_audiofile == "":
+        if scene.bz_audio_file == "":
             return False
         else:
             return True
@@ -19,7 +20,7 @@ class RENDER_OT_audio_to_vse(bpy.types.Operator):
         bpy.ops.sequencerextra.bz_audio_remove()
 
         scene = context.scene
-        audiofile = bpy.path.abspath(scene.bz_audiofile)
+        audiofile = bpy.path.abspath(scene.bz_audio_file)
         name = ntpath.basename(audiofile)
         chan = scene.bz_audio_channel
         start = 1
@@ -28,8 +29,6 @@ class RENDER_OT_audio_to_vse(bpy.types.Operator):
 
         sound_strip = scene.sequence_editor.sequences.new_sound(
             "bz_" + name, audiofile, chan, start)
-
-
 
         frame_start = 300000
         frame_end = -300000

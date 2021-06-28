@@ -1,7 +1,8 @@
 import bpy
 import ntpath
 
-class RENDER_OT_remove_bz_audio(bpy.types.Operator):
+
+class RemoveBzAudio(bpy.types.Operator):
     bl_idname = "sequencerextra.bz_audio_remove"
     bl_label = "Remove Audio"
     bl_description = "Adds the audio file to the VSE"
@@ -9,7 +10,7 @@ class RENDER_OT_remove_bz_audio(bpy.types.Operator):
     @classmethod
     def poll(self, context):
         scene = context.scene
-        if scene.bz_audiofile == "":
+        if scene.bz_audio_file == "":
             return False
         else:
             return True
@@ -21,7 +22,7 @@ class RENDER_OT_remove_bz_audio(bpy.types.Operator):
         if not scene.sequence_editor:
             return {"FINISHED"}
 
-        audiofile = bpy.path.abspath(scene.bz_audiofile)
+        audiofile = bpy.path.abspath(scene.bz_audio_file)
         name = ntpath.basename(audiofile)
         all_strips = list(sorted(
             bpy.context.scene.sequence_editor.sequences_all,
