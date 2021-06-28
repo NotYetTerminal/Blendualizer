@@ -1,0 +1,6 @@
+v0.1
+====
+Added:
+Material select for bars
+
+Removed:
