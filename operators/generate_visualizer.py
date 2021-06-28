@@ -106,7 +106,6 @@ class BLENDUALIZER_OT_generate_visualizer(bpy.types.Operator):
         import time
 
         for i in range(0, bar_count):
-            start_time = time.time()
             name = 'Bar ' + str(i)
 
             if not scene.bz_use_custom_mesh:
@@ -160,12 +159,11 @@ class BLENDUALIZER_OT_generate_visualizer(bpy.types.Operator):
                 area = bpy.context.area.type
                 bpy.context.area.type = 'GRAPH_EDITOR'
 
-                self.report({"INFO"}, str(time.time()-start_time))
-
-                bpy.ops.graph.sound_bake(filepath=audiofile, low=low, high=high,
-                                         attack=attack_time, release=release_time)
-
-                start_time = time.time()
+                try:
+                    bpy.ops.graph.sound_bake(filepath=audiofile, low=low, high=high,
+                                             attack=attack_time, release=release_time)
+                except RuntimeError:
+                    self.report({"WARNING"}, "Unsupported file format.")
 
                 bpy.context.area.type = area
 
@@ -183,8 +181,6 @@ class BLENDUALIZER_OT_generate_visualizer(bpy.types.Operator):
             progress = 100 * (i / bar_count)
             wm.progress_update(progress)
             update_progress("Generating Visualizer", progress / 100.0)
-
-            self.reprot({"INFO"}, str(time.time()-start_time))
 
         original_location = bar_set_empty.location[:]
         original_rotation = bar_set_empty.rotation_euler[:]
