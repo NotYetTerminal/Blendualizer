@@ -1,5 +1,3 @@
-from .align_camera import RENDER_OT_align_camera
 from .audio_to_vse import RENDER_OT_audio_to_vse
 from .generate_visualizer import GenerateVisualizer
-from .make_previews import RENDER_OT_make_previews
 from .remove_bz_audio import RENDER_OT_remove_bz_audio
