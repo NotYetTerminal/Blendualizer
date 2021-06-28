@@ -339,7 +339,6 @@ classes = [
     PropertiesUi,
     RENDER_OT_audio_to_vse,
     GenerateVisualizer,
-    RENDER_OT_make_previews,
     RENDER_OT_remove_bz_audio
 ]
 
