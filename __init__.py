@@ -34,7 +34,7 @@ class PropertiesUi(bpy.types.Panel):
         row = layout.label(text="Audio")
 
         row = layout.row()
-        row.prop(scene, "bz_audiofile", icon="SOUND")
+        row.prop(scene, "bz_audio_file", icon="SOUND")
         row = layout.row()
         row.prop(scene, "bz_audio_channel")
         row = layout.row()

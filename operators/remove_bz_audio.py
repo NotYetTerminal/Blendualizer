@@ -24,14 +24,16 @@ class RemoveBzAudio(bpy.types.Operator):
 
         audiofile = bpy.path.abspath(scene.bz_audio_file)
         name = ntpath.basename(audiofile)
-        all_strips = list(sorted(
-            bpy.context.scene.sequence_editor.sequences_all,
-            key=lambda x: x.frame_start))
-        bpy.ops.sequencer.select_all(action="DESELECT")
-        count = 0
-        for strip in all_strips:
-            if strip.name.startswith("bz_" + name):
-                strip.select = True
+
+        for seqs in scene.sequence_editor.sequences:
+            if seqs.type == "SOUND" and seqs.sound.name == name:
+                seqs.select = True
                 bpy.ops.sequencer.delete()
+
+                self.report({"INFO"}, "Sound deleted.")
+
+                return {"FINISHED"}
+
+        self.report({"WARNING"}, "Sound not found. (Name could contain foreign characters)")
 
         return {"FINISHED"}
