@@ -134,14 +134,6 @@ class PropertiesUi(bpy.types.Panel):
         row = layout.row()
         row.operator("object.bz_generate", icon="FILE_REFRESH")
 
-        row = layout.separator()
-        row = layout.label(text="Camera")
-
-        row = layout.row()
-        row.prop(scene, "bz_cam_alignment")
-        row = layout.row()
-        row.operator("object.bz_align_camera", icon="CAMERA_DATA")
-
         '''
         #column = layout.column()
         #for i in range(scene.bz_bar_count):
@@ -336,31 +328,15 @@ def initprop():
         type=bpy.types.Material
     )
 
-    # color_input_description = "Color applied to bars after visualizer is generated"
-
     bpy.types.Scene.bz_preview_mode = bpy.props.BoolProperty(
         name="Preview Mode",
         description="Generate bars without animation",
         default=False
     )
 
-    bpy.types.Scene.bz_cam_alignment = bpy.props.EnumProperty(
-        name="Alignment",
-        description="Position, orientation and type of camera",
-        default="2D_bottom",
-        items=[("2D_bottom", "2D bottom", "", "", 1),
-               ("2D_center", "2D center", "", "", 2),
-               ("2D_top", "2D top", "", "", 3),
-               ("2D_left", "2D left", "", "", 4),
-               ("2D_right", "2D right", "", "", 5),
-               ("3D_bottom", "3D bottom", "", "", 6),
-               ("3D_center", "3D center", "", "", 7)
-               ])
-
 
 classes = [
     PropertiesUi,
-    RENDER_OT_align_camera,
     RENDER_OT_audio_to_vse,
     GenerateVisualizer,
     RENDER_OT_make_previews,
