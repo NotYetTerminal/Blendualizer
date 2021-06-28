@@ -79,7 +79,7 @@ class BLENDUALIZER_OT_generate_visualizer(bpy.types.Operator):
 
         note_step = 120.0 / bar_count
         a = 2 ** (1.0 / 12.0)
-        low = 0.0
+        # low = 0.0
         high = 16.0
 
         bpy.ops.object.select_all(action="DESELECT")
@@ -89,8 +89,8 @@ class BLENDUALIZER_OT_generate_visualizer(bpy.types.Operator):
         if collection_present:
             empty_present = collection_present.objects.get(scene.bz_custom_name)
             if empty_present:
-                for i in empty_present.children:
-                    i.select_set(True)
+                for bar in empty_present.children:
+                    bar.select_set(True)
                 bpy.ops.object.delete()
         else:
             scene.collection.children.link(bpy.data.collections.new(collection_name))
@@ -103,10 +103,8 @@ class BLENDUALIZER_OT_generate_visualizer(bpy.types.Operator):
             bar_set_empty = bpy.data.objects.new(scene.bz_custom_name, None)
             scene.collection.children[collection_name].objects.link(bar_set_empty)
 
-        import time
-
-        for i in range(0, bar_count):
-            name = 'Bar ' + str(i)
+        for count in range(0, bar_count):
+            name = 'Bar ' + str(count)
 
             if not scene.bz_use_custom_mesh:
                 mesh = bpy.data.meshes.new(name)
@@ -126,16 +124,16 @@ class BLENDUALIZER_OT_generate_visualizer(bpy.types.Operator):
             if scene.bz_use_radial:
 
                 if scene.bz_use_sym:
-                    angle = arc_start + (arc_direction * ((i + 0.5) / bar_count) * (arc_angle / 2))
+                    angle = arc_start + (arc_direction * ((count + 0.5) / bar_count) * (arc_angle / 2))
                 else:
-                    angle = arc_start + (arc_direction * ((i + 0.5) / bar_count) * arc_angle)
+                    angle = arc_start + (arc_direction * ((count + 0.5) / bar_count) * arc_angle)
 
                 bar.rotation_euler[2] = angle
                 loc[0] = -math.sin(angle) * radius
                 loc[1] = math.cos(angle) * radius
 
             else:
-                loc[0] = (i * spacing) + line_start
+                loc[0] = (count * spacing) + line_start
 
             bar.location = (loc[0], loc[1], loc[2])
 
@@ -144,7 +142,7 @@ class BLENDUALIZER_OT_generate_visualizer(bpy.types.Operator):
             bar.scale.z = bar_depth
 
             if preview_mode:
-                bar.scale.y = amplitude * (math.cos(i * preview_coef) + 1.2) / 2.2
+                bar.scale.y = amplitude * (math.cos(count * preview_coef) + 1.2) / 2.2
             else:
                 bpy.ops.object.transform_apply(
                     location=False, rotation=False, scale=True)
@@ -155,6 +153,12 @@ class BLENDUALIZER_OT_generate_visualizer(bpy.types.Operator):
 
                 low = high
                 high = low * (a ** note_step)
+
+                self.report({"INFO"}, str(high))
+                self.report({"INFO"}, str((count + 1) * note_step))
+
+                # low = count * note_step
+                # high = (count + 1) * note_step
 
                 area = bpy.context.area.type
                 bpy.context.area.type = 'GRAPH_EDITOR'
@@ -178,7 +182,7 @@ class BLENDUALIZER_OT_generate_visualizer(bpy.types.Operator):
                     mirror_modifier.use_axis = (False, True, False)
 
             bar.select_set(False)
-            progress = 100 * (i / bar_count)
+            progress = 100 * (count / bar_count)
             wm.progress_update(progress)
             update_progress("Generating Visualizer", progress / 100.0)
 
@@ -189,9 +193,9 @@ class BLENDUALIZER_OT_generate_visualizer(bpy.types.Operator):
         bar_set_empty.rotation_euler = (0.0, 0.0, 0.0)
         bar_set_empty.scale = (1.0, 1.0, 1.0)
 
-        for i in scene.collection.children[collection_name].objects:
-            if not i.parent and len(i.children) == 0:
-                i.select_set(True)
+        for thing in scene.collection.children[collection_name].objects:
+            if not thing.parent and len(thing.children) == 0:
+                thing.select_set(True)
 
         bar_set_empty.select_set(True)
         context.view_layer.objects.active = bar_set_empty
