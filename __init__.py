@@ -1,5 +1,4 @@
 import bpy
-
 from .operators import *
 
 bl_info = {
@@ -14,7 +13,7 @@ bl_info = {
     "location": "Properties > Scene"}
 
 
-class PropertiesUi(bpy.types.Panel):
+class BLENDUALIZER_PT_properties_ui(bpy.types.Panel):
     bl_space_type = "PROPERTIES"
     bl_region_type = "WINDOW"
     bl_label = "Blendualizer"
@@ -282,10 +281,10 @@ def init_prop():
 
 
 classes = [
-    PropertiesUi,
-    AudioToVse,
-    GenerateVisualizer,
-    RemoveBzAudio
+    BLENDUALIZER_PT_properties_ui,
+    BLENDUALIZER_OT_audio_to_vse,
+    BLENDUALIZER_OT_generate_visualizer,
+    BLENDUALIZER_OT_remove_audio_from_vse,
 ]
 
 
@@ -299,7 +298,5 @@ def register():
 
 def unregister():
     from bpy.utils import unregister_class
-    # unregister_class(PropertyGroup)
-
     for cls in reversed(classes):
         unregister_class(cls)

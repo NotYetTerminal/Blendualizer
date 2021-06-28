@@ -2,7 +2,7 @@ import bpy
 import ntpath
 
 
-class RemoveBzAudio(bpy.types.Operator):
+class BLENDUALIZER_OT_remove_audio_from_vse(bpy.types.Operator):
     bl_idname = "sequencerextra.bz_audio_remove"
     bl_label = "Remove Audio"
     bl_description = "Adds the audio file to the VSE"

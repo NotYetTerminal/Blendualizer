@@ -1,37 +1,9 @@
 import bpy
 import math
-
 from .tools.update_progress import update_progress
 
 
-def get_context_area(context, context_dict, area_type='GRAPH_EDITOR',
-                     context_screen=False):
-    """
-    context : the current context
-    context_dict : a context dictionary. Will update area, screen, scene,
-                   area, region
-    area_type: the type of area to search for
-    context_screen: Boolean. If true only search in the context screen.
-    """
-    if not context_screen:  # default
-        screens = bpy.data.screens
-    else:
-        screens = [context.screen]
-    for screen in screens:
-        for area_index, area in screen.areas.items():
-            if area.type == area_type:
-                for region in area.regions:
-                    if region.type == 'WINDOW':
-                        context_dict["area"] = area
-                        context_dict["screen"] = screen
-                        context_dict["scene"] = context.scene
-                        context_dict["window"] = context.window
-                        context_dict["region"] = region
-                        return area
-    return None
-
-
-class GenerateVisualizer(bpy.types.Operator):
+class BLENDUALIZER_OT_generate_visualizer(bpy.types.Operator):
     bl_idname = "object.bz_generate"
     bl_label = "(re)Generate Visualizer"
     bl_description = "Generates visualizer bars and animation"
@@ -66,14 +38,6 @@ class GenerateVisualizer(bpy.types.Operator):
         if shape == "PYRAMID":
             return [(0, 1, 2), (0, 2, 3), (0, 3, 4), (0, 4, 1), (1, 2, 3, 4)]
 
-    def lerp_color(self, start_color, end_color, ratio):
-        result = [0, 0, 0]
-
-        for index in [0, 1, 2]:
-            result[index] = start_color[index] + ratio * (end_color[index] - start_color[index])
-
-        return result
-
     def execute(self, context):
         scene = context.scene
         scene.frame_current = 1
@@ -102,8 +66,6 @@ class GenerateVisualizer(bpy.types.Operator):
         preview_mode = scene.bz_preview_mode
         audiofile = bpy.path.abspath(scene.bz_audio_file)
 
-        digits = str(len(str(bar_count)))
-        number_format = "%0" + digits + "d"
         line_start = -(bar_count * spacing) / 2 + spacing / 2
         preview_coef = 8 * math.pi / bar_count
 
@@ -136,14 +98,16 @@ class GenerateVisualizer(bpy.types.Operator):
         wm = context.window_manager
         wm.progress_begin(0, 100.0)
 
-        centre_empty = scene.collection.children[collection_name].objects.get(scene.bz_custom_name)
-        if not centre_empty:
-            centre_empty = bpy.data.objects.new(scene.bz_custom_name, None)
-            scene.collection.children[collection_name].objects.link(centre_empty)
+        bar_set_empty = scene.collection.children[collection_name].objects.get(scene.bz_custom_name)
+        if not bar_set_empty:
+            bar_set_empty = bpy.data.objects.new(scene.bz_custom_name, None)
+            scene.collection.children[collection_name].objects.link(bar_set_empty)
+
+        import time
 
         for i in range(0, bar_count):
-            formatted_number = number_format % i
-            name = 'Bar ' + formatted_number
+            start_time = time.time()
+            name = 'Bar ' + str(i)
 
             if not scene.bz_use_custom_mesh:
                 mesh = bpy.data.meshes.new(name)
@@ -180,16 +144,13 @@ class GenerateVisualizer(bpy.types.Operator):
             bar.scale.y = amplitude
             bar.scale.z = bar_depth
 
-            c = bpy.context.copy()
-            get_context_area(bpy.context, c)
-
             if preview_mode:
                 bar.scale.y = amplitude * (math.cos(i * preview_coef) + 1.2) / 2.2
             else:
                 bpy.ops.object.transform_apply(
                     location=False, rotation=False, scale=True)
 
-                bpy.ops.anim.keyframe_insert_menu(c, type="Scaling")
+                bpy.ops.anim.keyframe_insert_menu(type="Scaling")
                 bar.animation_data.action.fcurves[0].lock = True
                 bar.animation_data.action.fcurves[2].lock = True
 
@@ -199,19 +160,22 @@ class GenerateVisualizer(bpy.types.Operator):
                 area = bpy.context.area.type
                 bpy.context.area.type = 'GRAPH_EDITOR'
 
+                self.report({"INFO"}, str(time.time()-start_time))
+
                 bpy.ops.graph.sound_bake(filepath=audiofile, low=low, high=high,
                                          attack=attack_time, release=release_time)
 
+                start_time = time.time()
+
                 bpy.context.area.type = area
 
-                active = bpy.context.active_object
-                active.animation_data.action.fcurves[1].lock = True
+                bar.animation_data.action.fcurves[1].lock = True
 
             bar.active_material = scene.bz_material
 
             if scene.bz_use_sym:
                 mirror_modifier = bar.modifiers.new(name="Mirror", type="MIRROR")
-                mirror_modifier.mirror_object = centre_empty
+                mirror_modifier.mirror_object = bar_set_empty
                 if not scene.bz_use_radial:
                     mirror_modifier.use_axis = (False, True, False)
 
@@ -220,27 +184,29 @@ class GenerateVisualizer(bpy.types.Operator):
             wm.progress_update(progress)
             update_progress("Generating Visualizer", progress / 100.0)
 
-        original_location = centre_empty.location[:]
-        original_rotation = centre_empty.rotation_euler[:]
-        original_scale = centre_empty.scale[:]
-        centre_empty.location = (0.0, 0.0, 0.0)
-        centre_empty.rotation_euler = (0.0, 0.0, 0.0)
-        centre_empty.scale = (1.0, 1.0, 1.0)
+            self.reprot({"INFO"}, str(time.time()-start_time))
+
+        original_location = bar_set_empty.location[:]
+        original_rotation = bar_set_empty.rotation_euler[:]
+        original_scale = bar_set_empty.scale[:]
+        bar_set_empty.location = (0.0, 0.0, 0.0)
+        bar_set_empty.rotation_euler = (0.0, 0.0, 0.0)
+        bar_set_empty.scale = (1.0, 1.0, 1.0)
 
         for i in scene.collection.children[collection_name].objects:
             if not i.parent and len(i.children) == 0:
                 i.select_set(True)
 
-        centre_empty.select_set(True)
-        context.view_layer.objects.active = centre_empty
+        bar_set_empty.select_set(True)
+        context.view_layer.objects.active = bar_set_empty
         bpy.ops.object.parent_set()
 
         bpy.ops.object.select_all(action="DESELECT")
-        centre_empty.select_set(True)
+        bar_set_empty.select_set(True)
 
-        centre_empty.location = original_location
-        centre_empty.rotation_euler = original_rotation
-        centre_empty.scale = original_scale
+        bar_set_empty.location = original_location
+        bar_set_empty.rotation_euler = original_rotation
+        bar_set_empty.scale = original_scale
 
         wm.progress_end()
         update_progress("Generating Visualizer", 1)

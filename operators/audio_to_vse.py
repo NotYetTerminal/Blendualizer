@@ -2,7 +2,7 @@ import bpy
 import ntpath
 
 
-class AudioToVse(bpy.types.Operator):
+class BLENDUALIZER_OT_audio_to_vse(bpy.types.Operator):
     bl_idname = "sequencerextra.bz_audio_to_sequencer"
     bl_label = "Add Audio to VSE"
     bl_description = "Adds the audio file to the VSE"

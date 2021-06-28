@@ -1,3 +1,3 @@
-from .audio_to_vse import AudioToVse
-from .generate_visualizer import GenerateVisualizer
-from .remove_bz_audio import RemoveBzAudio
+from .audio_to_vse import BLENDUALIZER_OT_audio_to_vse
+from .generate_visualizer import BLENDUALIZER_OT_generate_visualizer
+from .remove_bz_audio import BLENDUALIZER_OT_remove_audio_from_vse
