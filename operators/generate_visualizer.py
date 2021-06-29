@@ -38,6 +38,15 @@ class BLENDUALIZER_OT_generate_visualizer(bpy.types.Operator):
         if shape == "PYRAMID":
             return [(0, 1, 2), (0, 2, 3), (0, 3, 4), (0, 4, 1), (1, 2, 3, 4)]
 
+    def bake_and_lock(self, audio_file, low, high, attack_time, release_time, bar, context):
+        context["area"].type = "GRAPH_EDITOR"
+        bpy.ops.graph.sound_bake(context,
+                                 filepath=audio_file, low=low, high=high,
+                                 attack=attack_time, release=release_time)
+
+        bar.animation_data.action.fcurves[1].lock = True
+        self.report({"INFO"}, "DONE")
+
     def execute(self, context):
         scene = context.scene
         scene.frame_current = 1
@@ -64,7 +73,7 @@ class BLENDUALIZER_OT_generate_visualizer(bpy.types.Operator):
 
         flip_direction = scene.bz_flip_direction
         preview_mode = scene.bz_preview_mode
-        audiofile = bpy.path.abspath(scene.bz_audio_file)
+        audio_file = bpy.path.abspath(scene.bz_audio_file)
 
         line_start = -(bar_count * spacing) / 2 + spacing / 2
         preview_coef = 8 * math.pi / bar_count
@@ -103,8 +112,14 @@ class BLENDUALIZER_OT_generate_visualizer(bpy.types.Operator):
             bar_set_empty = bpy.data.objects.new(scene.bz_custom_name, None)
             scene.collection.children[collection_name].objects.link(bar_set_empty)
 
+        from threading import Thread
+        import time
+
         for count in range(0, bar_count):
-            name = 'Bar ' + str(count)
+            low = high
+            high = low * (a ** note_step)
+
+            name = str(round(low, 1)) + ' | ' + str(round(high, 1))
 
             if not scene.bz_use_custom_mesh:
                 mesh = bpy.data.meshes.new(name)
@@ -122,7 +137,6 @@ class BLENDUALIZER_OT_generate_visualizer(bpy.types.Operator):
             loc = [0.0, 0.0, 0.0]
 
             if scene.bz_use_radial:
-
                 if scene.bz_use_sym:
                     angle = arc_start + (arc_direction * ((count + 0.5) / bar_count) * (arc_angle / 2))
                 else:
@@ -151,27 +165,32 @@ class BLENDUALIZER_OT_generate_visualizer(bpy.types.Operator):
                 bar.animation_data.action.fcurves[0].lock = True
                 bar.animation_data.action.fcurves[2].lock = True
 
-                low = high
-                high = low * (a ** note_step)
-
                 self.report({"INFO"}, str(high))
                 self.report({"INFO"}, str((count + 1) * note_step))
 
                 # low = count * note_step
                 # high = (count + 1) * note_step
 
-                area = bpy.context.area.type
-                bpy.context.area.type = 'GRAPH_EDITOR'
+                #try:
 
-                try:
-                    bpy.ops.graph.sound_bake(filepath=audiofile, low=low, high=high,
-                                             attack=attack_time, release=release_time)
-                except RuntimeError:
-                    self.report({"WARNING"}, "Unsupported file format.")
+                #area = bpy.context.area.type
+                #bpy.context.area.type = 'GRAPH_EDITOR'
 
-                bpy.context.area.type = area
+                start_time = time.time()
 
-                bar.animation_data.action.fcurves[1].lock = True
+                t1 = Thread(target=self.bake_and_lock,
+                            args=(audio_file, low, high, attack_time, release_time, bar, bpy.context.copy()))
+                t1.start()
+                t1.join()
+
+                return {"FINISHED"}
+
+                #except RuntimeError:
+                #    self.report({"WARNING"}, "Unsupported file format.")
+
+                self.report({"INFO"}, str(time.time()-start_time))
+
+                #bpy.context.area.type = area
 
             bar.active_material = scene.bz_material
 
