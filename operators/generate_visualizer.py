@@ -39,7 +39,6 @@ class BLENDUALIZER_OT_generate_visualizer(bpy.types.Operator):
             return [(0, 1, 2), (0, 2, 3), (0, 3, 4), (0, 4, 1), (1, 2, 3, 4)]
 
     def bake_and_lock(self, audio_file, low, high, attack_time, release_time, bar, context):
-        context["area"].type = "GRAPH_EDITOR"
         bpy.ops.graph.sound_bake(context,
                                  filepath=audio_file, low=low, high=high,
                                  attack=attack_time, release=release_time)
@@ -86,10 +85,14 @@ class BLENDUALIZER_OT_generate_visualizer(bpy.types.Operator):
         arc_center = -arc_center_deg / 360 * 2 * math.pi
         arc_start = arc_center - arc_direction * arc_angle / 2
 
-        note_step = 120.0 / bar_count
-        a = 2 ** (1.0 / 12.0)
+        low_freq = scene.bz_low_freq
+        high_freq = scene.bz_high_freq
+        steps = (high_freq - low_freq) / bar_count
+
+        #note_step = 120.0 / bar_count
+        #a = 2 ** (1.0 / 12.0)
         # low = 0.0
-        high = 16.0
+        #high = 16.0
 
         bpy.ops.object.select_all(action="DESELECT")
         collection_name = "Bizualizer Collection"
@@ -115,9 +118,14 @@ class BLENDUALIZER_OT_generate_visualizer(bpy.types.Operator):
         from threading import Thread
         import time
 
+        area = bpy.context.area.type
+        bpy.context.area.type = 'GRAPH_EDITOR'
+
         for count in range(0, bar_count):
-            low = high
-            high = low * (a ** note_step)
+            low = (count * steps) + low_freq
+            high = low + steps
+            #low = high
+            #high = low * (a ** note_step)
 
             name = str(round(low, 1)) + ' | ' + str(round(high, 1))
 
@@ -158,15 +166,14 @@ class BLENDUALIZER_OT_generate_visualizer(bpy.types.Operator):
             if preview_mode:
                 bar.scale.y = amplitude * (math.cos(count * preview_coef) + 1.2) / 2.2
             else:
-                bpy.ops.object.transform_apply(
-                    location=False, rotation=False, scale=True)
+                #bpy.ops.object.transform_apply(location=False, rotation=False, scale=True)
 
                 bpy.ops.anim.keyframe_insert_menu(type="Scaling")
                 bar.animation_data.action.fcurves[0].lock = True
                 bar.animation_data.action.fcurves[2].lock = True
 
                 self.report({"INFO"}, str(high))
-                self.report({"INFO"}, str((count + 1) * note_step))
+                #self.report({"INFO"}, str((count + 1) * note_step))
 
                 # low = count * note_step
                 # high = (count + 1) * note_step
@@ -178,12 +185,17 @@ class BLENDUALIZER_OT_generate_visualizer(bpy.types.Operator):
 
                 start_time = time.time()
 
-                t1 = Thread(target=self.bake_and_lock,
+                '''t1 = Thread(target=self.bake_and_lock,
                             args=(audio_file, low, high, attack_time, release_time, bar, bpy.context.copy()))
                 t1.start()
-                t1.join()
+                t1.join()'''
 
-                return {"FINISHED"}
+                bpy.ops.graph.sound_bake(filepath=audio_file, low=low, high=high,
+                                         attack=attack_time, release=release_time)
+
+                bar.animation_data.action.fcurves[1].lock = True
+
+                # return {"FINISHED"}
 
                 #except RuntimeError:
                 #    self.report({"WARNING"}, "Unsupported file format.")
@@ -201,9 +213,12 @@ class BLENDUALIZER_OT_generate_visualizer(bpy.types.Operator):
                     mirror_modifier.use_axis = (False, True, False)
 
             bar.select_set(False)
+
             progress = 100 * (count / bar_count)
             wm.progress_update(progress)
             update_progress("Generating Visualizer", progress / 100.0)
+
+        bpy.context.area.type = area
 
         original_location = bar_set_empty.location[:]
         original_rotation = bar_set_empty.rotation_euler[:]

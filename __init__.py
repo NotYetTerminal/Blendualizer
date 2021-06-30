@@ -35,6 +35,13 @@ class BLENDUALIZER_PT_properties_ui(bpy.types.Panel):
         row = layout.row()
         row.prop(scene, "bz_audio_file", icon="SOUND")
         row = layout.row()
+        split = row.split()
+        col_a = split.column(align=True)
+        col_a.prop(scene, "bz_low_freq")
+        col_b = split.column(align=True)
+        col_b.prop(scene, "bz_high_freq")
+
+        row = layout.row()
         row.prop(scene, "bz_audio_channel")
         row = layout.row()
         row.operator("sequencerextra.bz_audio_to_sequencer",
@@ -137,6 +144,22 @@ def init_prop():
         name="Audio Path",
         description="Define path of the audio file",
         subtype="FILE_PATH",
+    )
+
+    bpy.types.Scene.bz_low_freq = bpy.props.IntProperty(
+        name="Low frequency",
+        description="The frequency from which to go",
+        default=0,
+        min=0,
+        max=9999
+    )
+
+    bpy.types.Scene.bz_high_freq = bpy.props.IntProperty(
+        name="High frequency",
+        description="The frequency to which to go",
+        default=10000,
+        min=1,
+        max=10000
     )
 
     bpy.types.Scene.bz_audio_channel = bpy.props.IntProperty(
