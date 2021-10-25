@@ -91,7 +91,7 @@ class BLENDUALIZER_OT_generate_visualizer(bpy.types.Operator):
 
         note_step = 120.0 / bar_count
         a = 2 ** (1.0 / 12.0)
-        # low = 0.0
+        low = 0.0
         high = 16.0
 
         bpy.ops.object.select_all(action="DESELECT")
@@ -126,8 +126,6 @@ class BLENDUALIZER_OT_generate_visualizer(bpy.types.Operator):
         for count in range(0, bar_count):
             # low = (count * steps) + low_freq
             # high = low + steps
-            low = high
-            high = low * (a ** note_step)
 
             name = str(round(low, 1)) + ' | ' + str(round(high, 1))
 
@@ -174,8 +172,17 @@ class BLENDUALIZER_OT_generate_visualizer(bpy.types.Operator):
                 bar.animation_data.action.fcurves[0].lock = True
                 bar.animation_data.action.fcurves[2].lock = True
 
+                low = high
+                high = low * (a ** note_step)
+
                 # self.report({"INFO"}, str(high))
                 self.report({"INFO"}, str((count + 1) * note_step))
+
+                bpy.ops.graph.sound_bake(filepath=audio_file, low=low, high=high,
+                                         attack=attack_time, release=release_time)
+
+                bar.animation_data.action.fcurves[1].lock = True
+                self.report({"INFO"}, "DONE")
 
                 # low = count * note_step
                 # high = (count + 1) * note_step
@@ -185,14 +192,14 @@ class BLENDUALIZER_OT_generate_visualizer(bpy.types.Operator):
                 # area = bpy.context.area.type
                 # bpy.context.area.type = 'GRAPH_EDITOR'
 
-                start_time = time.time()
+                #start_time = time.time()
 
                 '''t1 = Thread(target=self.bake_and_lock,
                             args=(audio_file, low, high, attack_time, release_time, bar, bpy.context.copy()))
                 t1.start()
                 t1.join()'''
 
-                threads.append(threading.Thread(target=self.bake_and_lock,
+                '''threads.append(threading.Thread(target=self.bake_and_lock,
                                                 args=(bpy.context.copy(),
                                                       audio_file,
                                                       low,
@@ -210,7 +217,7 @@ class BLENDUALIZER_OT_generate_visualizer(bpy.types.Operator):
                 # except RuntimeError:
                 #    self.report({"WARNING"}, "Unsupported file format.")
 
-                self.report({"INFO"}, str(time.time() - start_time))
+                self.report({"INFO"}, str(time.time() - start_time))'''
 
                 # bpy.context.area.type = area
 
