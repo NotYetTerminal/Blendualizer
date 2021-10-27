@@ -1,5 +1,7 @@
 import bpy
 import math
+import subprocess
+import os
 from .tools.update_progress import update_progress
 
 
@@ -9,6 +11,9 @@ class BLENDUALIZER_OT_generate_visualizer(bpy.types.Operator):
     bl_description = "Generates visualizer bars and animation"
 
     base_size = 2
+
+    data_cache = '\\cache'
+    bake_cache = '\\cache_b'
 
     @classmethod
     def poll(self, context):
@@ -45,10 +50,51 @@ class BLENDUALIZER_OT_generate_visualizer(bpy.types.Operator):
 
         bar.animation_data.action.fcurves[1].lock = True
         self.report({"INFO"}, "DONE")
+    
+    def write_data_file(self, id, audio_file, low, high, attack_time, release_time, bar_count):
+        addon_directory = bpy.utils.resource_path('USER') + '\\scripts\\addons\\Blendualizer\\operators'
+        if not os.path.isdir(addon_directory + self.data_cache):
+            os.mkdir(addon_directory + self.data_cache)
+
+        if not os.path.isdir(addon_directory + self.bake_cache):
+            os.mkdir(addon_directory + self.bake_cache)
+            
+        if len(os.listdir(addon_directory + self.data_cache)) == bar_count:
+            for file in os.listdir(addon_directory + self.data_cache):
+                os.remove(addon_directory + self.data_cache + '\\' + file)
+
+        with open(addon_directory + self.data_cache + '\\' + str(id) + '.txt', 'w') as f:
+            f.write(f'{audio_file};{low};{high};{attack_time};{release_time}')
+    
+    def start_bake_cache(self, id):
+        addon_directory = bpy.utils.resource_path('USER') + '\\scripts\\addons\\Blendualizer\\operators'
+        subprocess.Popen(['C:\\Program Files\\Blender Foundation\\Blender 2.93\\blender.exe', '-P', addon_directory + '\\bake_sound_and_cache.py', addon_directory + self.data_cache + '\\' + str(id) + '.txt'])
+
+    def check_bake_cache(self, bar_count):
+        addon_directory = bpy.utils.resource_path('USER') + '\\scripts\\addons\\Blendualizer\\operators'
+        if (len(os.listdir(addon_directory + self.bake_cache)) == bar_count):
+            return True
+        else:
+            return False
+
+    def apply_bake_cache(self, context, bar_count, collection_name):
+        for count in range(0, bar_count):
+            addon_directory = bpy.utils.resource_path('USER') + '\\scripts\\addons\\Blendualizer\\operators'
+            with open(addon_directory + self.bake_cache + str(count) + '.txt', 'r') as f:
+                data = f.read().split(';')
+            
+            bar = context.scene.collection.children[collection_name].objects[count]
+
+            index = 0
+            for point in data:
+                bar.scale.y = point
+                bar.keyframe_insert(data_path='scale', frame=index)
+                index += 1
+
+            #bar.animation_data.action.fcurves[1].lock = True
 
     def execute(self, context):
         scene = context.scene
-        scene.frame_current = 1
         attack_time = scene.bz_attack_time
         release_time = scene.bz_release_time
 
@@ -115,17 +161,12 @@ class BLENDUALIZER_OT_generate_visualizer(bpy.types.Operator):
             bar_set_empty = bpy.data.objects.new(scene.bz_custom_name, None)
             scene.collection.children[collection_name].objects.link(bar_set_empty)
 
-        import threading
+        #import threading
         import time
 
-        area = bpy.context.area.type
-        bpy.context.area.type = 'GRAPH_EDITOR'
-
-        threads = []
+        #threads = []
 
         for count in range(0, bar_count):
-            # low = (count * steps) + low_freq
-            # high = low + steps
 
             name = str(round(low, 1)) + ' | ' + str(round(high, 1))
 
@@ -168,58 +209,19 @@ class BLENDUALIZER_OT_generate_visualizer(bpy.types.Operator):
             else:
                 bpy.ops.object.transform_apply(location=False, rotation=False, scale=True)
 
-                bpy.ops.anim.keyframe_insert_menu(type="Scaling")
-                bar.animation_data.action.fcurves[0].lock = True
-                bar.animation_data.action.fcurves[2].lock = True
+                #bpy.ops.anim.keyframe_insert_menu(type="Scaling")
+                #bar.animation_data.action.fcurves[0].lock = True
+                #bar.animation_data.action.fcurves[2].lock = True
+
+                self.write_data_file(count, audio_file, low, high, attack_time, release_time, bar_count)
+                self.start_bake_cache(count)
+
+                #threads.append(threading.Thread(target=start_bake_cache))
+                #threads[-1].start()
 
                 low = high
                 high = low * (a ** note_step)
 
-                # self.report({"INFO"}, str(high))
-                self.report({"INFO"}, str((count + 1) * note_step))
-
-                bpy.ops.graph.sound_bake(filepath=audio_file, low=low, high=high,
-                                         attack=attack_time, release=release_time)
-
-                bar.animation_data.action.fcurves[1].lock = True
-                self.report({"INFO"}, "DONE")
-
-                # low = count * note_step
-                # high = (count + 1) * note_step
-
-                # try:
-
-                # area = bpy.context.area.type
-                # bpy.context.area.type = 'GRAPH_EDITOR'
-
-                #start_time = time.time()
-
-                '''t1 = Thread(target=self.bake_and_lock,
-                            args=(audio_file, low, high, attack_time, release_time, bar, bpy.context.copy()))
-                t1.start()
-                t1.join()'''
-
-                '''threads.append(threading.Thread(target=self.bake_and_lock,
-                                                args=(bpy.context.copy(),
-                                                      audio_file,
-                                                      low,
-                                                      high,
-                                                      attack_time,
-                                                      release_time,
-                                                      bar)))
-
-                threads[-1].start()
-
-                # bar.animation_data.action.fcurves[1].lock = True
-
-                # return {"FINISHED"}
-
-                # except RuntimeError:
-                #    self.report({"WARNING"}, "Unsupported file format.")
-
-                self.report({"INFO"}, str(time.time() - start_time))'''
-
-                # bpy.context.area.type = area
 
             bar.active_material = scene.bz_material
 
@@ -236,12 +238,14 @@ class BLENDUALIZER_OT_generate_visualizer(bpy.types.Operator):
             update_progress("Generating Visualizer", progress / 100.0)
 
         #for t in threads:
-        #    t.start()
-
-        for t in threads:
-            t.join()
-
-        bpy.context.area.type = area
+        #    t.join()
+        
+        '''if not preview_mode:
+            while True:
+                time.sleep(0.5)
+                if self.check_bake_cache(bar_count):
+                    break
+            self.apply_bake_cache()'''
 
         original_location = bar_set_empty.location[:]
         original_rotation = bar_set_empty.rotation_euler[:]
