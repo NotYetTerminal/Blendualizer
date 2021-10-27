@@ -68,6 +68,7 @@ class BLENDUALIZER_OT_generate_visualizer(bpy.types.Operator):
     
     def start_bake_cache(self, id):
         addon_directory = bpy.utils.resource_path('USER') + '\\scripts\\addons\\Blendualizer\\operators'
+        #print(f'"C:\\Program Files\\Blender Foundation\\Blender 2.93\\blender.exe" -P "{addon_directory}\\bake_sound_and_cache.py" "{addon_directory}{self.data_cache}\\{str(id)}.txt"')
         subprocess.Popen(['C:\\Program Files\\Blender Foundation\\Blender 2.93\\blender.exe', '-P', addon_directory + '\\bake_sound_and_cache.py', addon_directory + self.data_cache + '\\' + str(id) + '.txt'])
 
     def check_bake_cache(self, bar_count):

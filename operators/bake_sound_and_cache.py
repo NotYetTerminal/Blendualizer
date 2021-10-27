@@ -1,5 +1,6 @@
 import bpy
 import sys
+import time
 
 if __name__ == '__main__':
     data_file = sys.argv[-1]
@@ -14,7 +15,16 @@ if __name__ == '__main__':
 
     cube.select_set(True)
     bpy.context.view_layer.objects.active = cube
-    bpy.context.area.type = 'GRAPH_EDITOR'
+
+    while (True):
+        time.sleep(0.1)
+        try:
+            bpy.context.area.type = 'GRAPH_EDITOR'
+            break
+        except Exception as e:
+            print(e)
+
+    #bpy.context.area.type = 'GRAPH_EDITOR'
 
     bpy.ops.anim.keyframe_insert_menu(type="Scaling")
     cube.animation_data.action.fcurves[0].lock = True
