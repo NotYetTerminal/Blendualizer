@@ -3,7 +3,10 @@ Blender Music Visualizer.
 
 Maybe I will update with more features
 
-v0.1
+
+## History
+
+### v0.1
 ====
 Added:
 Material select for bars
