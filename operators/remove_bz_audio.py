@@ -1,6 +1,4 @@
 import bpy
-import ntpath
-
 
 class BLENDUALIZER_OT_remove_audio_from_vse(bpy.types.Operator):
     bl_idname = "sequencerextra.bz_audio_remove"
@@ -22,11 +20,10 @@ class BLENDUALIZER_OT_remove_audio_from_vse(bpy.types.Operator):
         if not scene.sequence_editor:
             return {"FINISHED"}
 
-        audiofile = bpy.path.abspath(scene.bz_audio_file)
-        name = ntpath.basename(audiofile)
+        audiofile_name = bpy.path.abspath(scene.bz_audio_file).split('\\')[-1]
 
         for seqs in scene.sequence_editor.sequences:
-            if seqs.type == "SOUND" and seqs.sound.name == name:
+            if seqs.type == "SOUND" and seqs.sound.name == audiofile_name:
                 seqs.select = True
                 bpy.ops.sequencer.delete()
 

@@ -1,9 +1,5 @@
 import bpy
 import math
-import subprocess
-import os
-from .tools.update_progress import update_progress
-
 
 class BLENDUALIZER_OT_generate_visualizer(bpy.types.Operator):
     bl_idname = "object.bz_generate"
@@ -11,9 +7,6 @@ class BLENDUALIZER_OT_generate_visualizer(bpy.types.Operator):
     bl_description = "Generates visualizer bars and animation"
 
     base_size = 2
-
-    data_cache = '\\cache'
-    bake_cache = '\\cache_b'
 
     @classmethod
     def poll(self, context):
@@ -42,57 +35,6 @@ class BLENDUALIZER_OT_generate_visualizer(bpy.types.Operator):
             return [(0, 1, 2, 3), (4, 5, 6, 7), (0, 1, 5, 4), (2, 3, 7, 6), (0, 3, 7, 4), (1, 2, 6, 5)]
         if shape == "PYRAMID":
             return [(0, 1, 2), (0, 2, 3), (0, 3, 4), (0, 4, 1), (1, 2, 3, 4)]
-
-    def bake_and_lock(self, context, audio_file, low, high, attack_time, release_time, bar):
-        bpy.ops.graph.sound_bake(context,
-                                 filepath=audio_file, low=low, high=high,
-                                 attack=attack_time, release=release_time)
-
-        bar.animation_data.action.fcurves[1].lock = True
-    
-    def write_data_file(self, id, audio_file, low, high, attack_time, release_time, bar_count):
-        addon_directory = bpy.utils.resource_path('USER') + '\\scripts\\addons\\Blendualizer\\operators'
-        if not os.path.isdir(addon_directory + self.data_cache):
-            os.mkdir(addon_directory + self.data_cache)
-
-        if not os.path.isdir(addon_directory + self.bake_cache):
-            os.mkdir(addon_directory + self.bake_cache)
-            
-        if len(os.listdir(addon_directory + self.data_cache)) == bar_count:
-            for file in os.listdir(addon_directory + self.data_cache):
-                os.remove(addon_directory + self.data_cache + '\\' + file)
-
-        with open(addon_directory + self.data_cache + '\\' + str(id) + '.txt', 'w') as f:
-            f.write(f'{audio_file};{low};{high};{attack_time};{release_time}')
-    
-    def start_bake_cache(self, id):
-        addon_directory = bpy.utils.resource_path('USER') + '\\scripts\\addons\\Blendualizer\\operators'
-        #print(f'"C:\\Program Files\\Blender Foundation\\Blender 2.93\\blender.exe" -P "{addon_directory}\\bake_sound_and_cache.py" "{addon_directory}{self.data_cache}\\{str(id)}.txt"')
-        #os.system('"C:\\Program Files\\Blender Foundation\\Blender 2.93\\blender.exe"')
-        subprocess.Popen(['C:\\Program Files\\Blender Foundation\\Blender 2.93\\blender.exe', '-P', addon_directory + '\\bake_sound_and_cache.py', '--', addon_directory + self.data_cache + '\\' + str(id) + '.txt'])
-
-    def check_bake_cache(self, bar_count):
-        addon_directory = bpy.utils.resource_path('USER') + '\\scripts\\addons\\Blendualizer\\operators'
-        if (len(os.listdir(addon_directory + self.bake_cache)) == bar_count):
-            return True
-        else:
-            return False
-
-    def apply_bake_cache(self, context, bar_count, collection_name):
-        for count in range(0, bar_count):
-            addon_directory = bpy.utils.resource_path('USER') + '\\scripts\\addons\\Blendualizer\\operators'
-            with open(addon_directory + self.bake_cache + str(count) + '.txt', 'r') as f:
-                data = f.read().split(';')
-            
-            bar = context.scene.collection.children[collection_name].objects[count]
-
-            index = 0
-            for point in data:
-                bar.scale.y = point
-                bar.keyframe_insert(data_path='scale', frame=index)
-                index += 1
-
-            #bar.animation_data.action.fcurves[1].lock = True
 
     def execute(self, context):
         scene = context.scene
@@ -162,11 +104,6 @@ class BLENDUALIZER_OT_generate_visualizer(bpy.types.Operator):
             bar_set_empty = bpy.data.objects.new(scene.bz_custom_name, None)
             scene.collection.children[collection_name].objects.link(bar_set_empty)
 
-        import threading
-        import time
-
-        threads = []
-
         area = bpy.context.area.type
         bpy.context.area.type = 'GRAPH_EDITOR'
 
@@ -216,18 +153,14 @@ class BLENDUALIZER_OT_generate_visualizer(bpy.types.Operator):
                 bpy.ops.anim.keyframe_insert_menu(type="Scaling")
                 bar.animation_data.action.fcurves[0].lock = True
                 bar.animation_data.action.fcurves[2].lock = True
-
-                self.write_data_file(count, audio_file, low, high, attack_time, release_time, bar_count)
-                #self.start_bake_cache(count)
-
-                threads.append(threading.Thread(target=self.start_bake_cache, args=(count,)))
-                threads[-1].start()
-
-                #threads.append(threading.Thread(target=self.bake_and_lock, args=(context.copy(), audio_file, low, high, attack_time, release_time, bar,)))
-                #threads[-1].start()
-
+                
                 low = high
                 high = low * (a ** note_step)
+
+                bpy.ops.graph.sound_bake(filepath=audio_file, low=low, high=high,
+                                         attack=attack_time, release=release_time)
+
+                bar.animation_data.action.fcurves[1].lock = True
 
 
             bar.active_material = scene.bz_material
@@ -242,20 +175,8 @@ class BLENDUALIZER_OT_generate_visualizer(bpy.types.Operator):
 
             progress = 100 * (count / bar_count)
             wm.progress_update(progress)
-            update_progress("Generating Visualizer", progress / 100.0)
-
-        for t in threads:
-            t.join()
-        
-        
+            
         bpy.context.area.type = area
-        
-        '''if not preview_mode:
-            while True:
-                time.sleep(0.5)
-                if self.check_bake_cache(bar_count):
-                    break
-            self.apply_bake_cache()'''
 
         original_location = bar_set_empty.location[:]
         original_rotation = bar_set_empty.rotation_euler[:]
@@ -281,5 +202,4 @@ class BLENDUALIZER_OT_generate_visualizer(bpy.types.Operator):
         bar_set_empty.scale = original_scale
 
         wm.progress_end()
-        update_progress("Generating Visualizer", 1)
         return {"FINISHED"}

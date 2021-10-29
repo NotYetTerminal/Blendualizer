@@ -1,6 +1,4 @@
 import bpy
-import ntpath
-
 
 class BLENDUALIZER_OT_audio_to_vse(bpy.types.Operator):
     bl_idname = "sequencerextra.bz_audio_to_sequencer"
@@ -16,18 +14,17 @@ class BLENDUALIZER_OT_audio_to_vse(bpy.types.Operator):
             return True
 
     def execute(self, context):
-
         bpy.ops.sequencerextra.bz_audio_remove()
 
         scene = context.scene
         audiofile = bpy.path.abspath(scene.bz_audio_file)
-        name = ntpath.basename(audiofile)
+        name = audiofile.split('\\')[-1]
         chan = scene.bz_audio_channel
         start = 1
         if not scene.sequence_editor:
             scene.sequence_editor_create()
 
-        sound_strip = scene.sequence_editor.sequences.new_sound(
+        scene.sequence_editor.sequences.new_sound(
             "bz_" + name, audiofile, chan, start)
 
         frame_start = 300000
