@@ -49,7 +49,6 @@ class BLENDUALIZER_OT_generate_visualizer(bpy.types.Operator):
                                  attack=attack_time, release=release_time)
 
         bar.animation_data.action.fcurves[1].lock = True
-        self.report({"INFO"}, "DONE")
     
     def write_data_file(self, id, audio_file, low, high, attack_time, release_time, bar_count):
         addon_directory = bpy.utils.resource_path('USER') + '\\scripts\\addons\\Blendualizer\\operators'
@@ -69,7 +68,8 @@ class BLENDUALIZER_OT_generate_visualizer(bpy.types.Operator):
     def start_bake_cache(self, id):
         addon_directory = bpy.utils.resource_path('USER') + '\\scripts\\addons\\Blendualizer\\operators'
         #print(f'"C:\\Program Files\\Blender Foundation\\Blender 2.93\\blender.exe" -P "{addon_directory}\\bake_sound_and_cache.py" "{addon_directory}{self.data_cache}\\{str(id)}.txt"')
-        subprocess.Popen(['C:\\Program Files\\Blender Foundation\\Blender 2.93\\blender.exe', '-P', addon_directory + '\\bake_sound_and_cache.py', addon_directory + self.data_cache + '\\' + str(id) + '.txt'])
+        #os.system('"C:\\Program Files\\Blender Foundation\\Blender 2.93\\blender.exe"')
+        subprocess.Popen(['C:\\Program Files\\Blender Foundation\\Blender 2.93\\blender.exe', '-P', addon_directory + '\\bake_sound_and_cache.py', '--', addon_directory + self.data_cache + '\\' + str(id) + '.txt'])
 
     def check_bake_cache(self, bar_count):
         addon_directory = bpy.utils.resource_path('USER') + '\\scripts\\addons\\Blendualizer\\operators'
@@ -162,10 +162,13 @@ class BLENDUALIZER_OT_generate_visualizer(bpy.types.Operator):
             bar_set_empty = bpy.data.objects.new(scene.bz_custom_name, None)
             scene.collection.children[collection_name].objects.link(bar_set_empty)
 
-        #import threading
+        import threading
         import time
 
-        #threads = []
+        threads = []
+
+        area = bpy.context.area.type
+        bpy.context.area.type = 'GRAPH_EDITOR'
 
         for count in range(0, bar_count):
 
@@ -210,14 +213,17 @@ class BLENDUALIZER_OT_generate_visualizer(bpy.types.Operator):
             else:
                 bpy.ops.object.transform_apply(location=False, rotation=False, scale=True)
 
-                #bpy.ops.anim.keyframe_insert_menu(type="Scaling")
-                #bar.animation_data.action.fcurves[0].lock = True
-                #bar.animation_data.action.fcurves[2].lock = True
+                bpy.ops.anim.keyframe_insert_menu(type="Scaling")
+                bar.animation_data.action.fcurves[0].lock = True
+                bar.animation_data.action.fcurves[2].lock = True
 
                 self.write_data_file(count, audio_file, low, high, attack_time, release_time, bar_count)
-                self.start_bake_cache(count)
+                #self.start_bake_cache(count)
 
-                #threads.append(threading.Thread(target=start_bake_cache))
+                threads.append(threading.Thread(target=self.start_bake_cache, args=(count,)))
+                threads[-1].start()
+
+                #threads.append(threading.Thread(target=self.bake_and_lock, args=(context.copy(), audio_file, low, high, attack_time, release_time, bar,)))
                 #threads[-1].start()
 
                 low = high
@@ -238,8 +244,11 @@ class BLENDUALIZER_OT_generate_visualizer(bpy.types.Operator):
             wm.progress_update(progress)
             update_progress("Generating Visualizer", progress / 100.0)
 
-        #for t in threads:
-        #    t.join()
+        for t in threads:
+            t.join()
+        
+        
+        bpy.context.area.type = area
         
         '''if not preview_mode:
             while True:
