@@ -74,10 +74,6 @@ class BLENDUALIZER_OT_generate_visualizer(bpy.types.Operator):
         arc_center = -arc_center_deg / 360 * 2 * math.pi
         arc_start = arc_center - arc_direction * arc_angle / 2
 
-        # low_freq = scene.bz_low_freq
-        # high_freq = scene.bz_high_freq
-        # steps = (high_freq - low_freq) / bar_count
-
         note_step = 120.0 / bar_count
         a = 2 ** (1.0 / 12.0)
         low = 0.0
@@ -153,14 +149,14 @@ class BLENDUALIZER_OT_generate_visualizer(bpy.types.Operator):
                 bpy.ops.anim.keyframe_insert_menu(type="Scaling")
                 bar.animation_data.action.fcurves[0].lock = True
                 bar.animation_data.action.fcurves[2].lock = True
-                
-                low = high
-                high = low * (a ** note_step)
 
                 bpy.ops.graph.sound_bake(filepath=audio_file, low=low, high=high,
                                          attack=attack_time, release=release_time)
 
                 bar.animation_data.action.fcurves[1].lock = True
+
+                low = high
+                high = low * (a ** note_step)
 
 
             bar.active_material = scene.bz_material
