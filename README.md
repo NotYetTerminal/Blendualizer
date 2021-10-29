@@ -1,5 +1,6 @@
 # Blendualizer
-Blender Music Visualizer
+Blender Music Visualizer.
+
 Maybe I will update with more features
 
 v0.1
