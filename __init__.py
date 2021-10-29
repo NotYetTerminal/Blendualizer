@@ -5,7 +5,7 @@ bl_info = {
     "name": "Blendualizer",
     "description": "Audio Visualizer Creator",
     "author": "532stary4",
-    "version": (0, 1, 0),
+    "version": (0, 2, 0),
     "blender": (2, 93, 0),
     "wiki_url": "https://github.com/532stary4/Blendualizer",
     "tracker_url": "https://github.com/532stary4/Blendualizer/issues",
