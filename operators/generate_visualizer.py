@@ -38,6 +38,7 @@ class BLENDUALIZER_OT_generate_visualizer(bpy.types.Operator):
 
     def execute(self, context):
         scene = context.scene
+        scene.frame_current = 1
         attack_time = scene.bz_attack_time
         release_time = scene.bz_release_time
 
