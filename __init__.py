@@ -55,9 +55,9 @@ class BLENDUALIZER_PT_properties_ui(bpy.types.Panel):
         row = layout.row()
         split = row.split()
         col_a = split.column(align=True)
-        col_a.label(text="Bar Shape:")
+        col_a.label(text="Visualizer Shape:")
         col_b = split.column(align=True)
-        col_b.prop(scene, "bz_bar_shape")
+        col_b.prop(scene, "bz_vis_shape")
         col_b.enabled = not scene.bz_use_custom_mesh
         row = layout.row()
         split = row.split()
@@ -75,7 +75,7 @@ class BLENDUALIZER_PT_properties_ui(bpy.types.Panel):
         col_a.prop(scene, "bz_bar_width")
         col_b = split.column(align=True)
         col_b.prop(scene, "bz_bar_depth")
-        col_b.enabled = self.is_shape_3d(scene.bz_bar_shape)
+        col_b.enabled = self.is_shape_3d(scene.bz_vis_shape)
         row = layout.row()
         split = row.split()
         col_a = split.column(align=True)
@@ -170,14 +170,15 @@ def init_prop():
         subtype="NONE"
     )
 
-    bpy.types.Scene.bz_bar_shape = bpy.props.EnumProperty(
+    bpy.types.Scene.bz_vis_shape = bpy.props.EnumProperty(
         name="",
         description="The shape of the bars",
         default="RECTANGLE",
         items=[("RECTANGLE", "Rectangle", "", "", 1),
                ("TRIANGLE", "Triangle", "", "", 2),
                ("CUBOID", "Cuboid", "", "", 3),
-               ("PYRAMID", "Pyramid", "", "", 4)]
+               ("PYRAMID", "Pyramid", "", "", 4),
+               ('CURVE', 'Curve', '', '', 5)]
     )
 
     bpy.types.Scene.bz_use_custom_mesh = bpy.props.BoolProperty(

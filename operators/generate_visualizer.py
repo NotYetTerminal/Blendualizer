@@ -8,6 +8,17 @@ class BLENDUALIZER_OT_generate_visualizer(bpy.types.Operator):
 
     base_size = 2
 
+    # first list is vertices
+    # second is the faces
+    data_dict = {'RECTANGLE': ([(-1, 2, 0), (1, 2, 0), (1, 0, 0), (-1, 0, 0)],
+                               [(0, 1, 2, 3)]),
+                 'TRIANGLE': ([(0, 2, 0), (1, 0, 0), (-1, 0, 0)],
+                             [(0, 1, 2)]),
+                 'CUBOID': ([(-1, 2, -1), (1, 2, -1), (1, 0, -1), (-1, 0, -1), (-1, 2, 1), (1, 2, 1), (1, 0, 1), (-1, 0, 1)],
+                            [(0, 1, 2, 3), (4, 5, 6, 7), (0, 1, 5, 4), (2, 3, 7, 6), (0, 3, 7, 4), (1, 2, 6, 5)]),
+                 'PYRAMID': ([(0, 2, 0), (-1, 0, -1), (1, 0, -1), (1, 0, 1), (-1, 0, 1)],
+                             [(0, 1, 2), (0, 2, 3), (0, 3, 4), (0, 4, 1), (1, 2, 3, 4)])}
+
     @classmethod
     def poll(self, context):
         scene = context.scene
@@ -16,36 +27,18 @@ class BLENDUALIZER_OT_generate_visualizer(bpy.types.Operator):
         else:
             return True
 
-    def getVertices(self, shape):
-        if shape == "RECTANGLE":
-            return [(-1, 2, 0), (1, 2, 0), (1, 0, 0), (-1, 0, 0)]
-        if shape == "TRIANGLE":
-            return [(0, 2, 0), (1, 0, 0), (-1, 0, 0)]
-        if shape == "CUBOID":
-            return [(-1, 2, -1), (1, 2, -1), (1, 0, -1), (-1, 0, -1), (-1, 2, 1), (1, 2, 1), (1, 0, 1), (-1, 0, 1)]
-        if shape == "PYRAMID":
-            return [(0, 2, 0), (-1, 0, -1), (1, 0, -1), (1, 0, 1), (-1, 0, 1)]
-
-    def getFaces(self, shape):
-        if shape == "RECTANGLE":
-            return [(0, 1, 2, 3)]
-        if shape == "TRIANGLE":
-            return [(0, 1, 2)]
-        if shape == "CUBOID":
-            return [(0, 1, 2, 3), (4, 5, 6, 7), (0, 1, 5, 4), (2, 3, 7, 6), (0, 3, 7, 4), (1, 2, 6, 5)]
-        if shape == "PYRAMID":
-            return [(0, 1, 2), (0, 2, 3), (0, 3, 4), (0, 4, 1), (1, 2, 3, 4)]
-
     def execute(self, context):
         scene = context.scene
         scene.frame_current = 1
         attack_time = scene.bz_attack_time
         release_time = scene.bz_release_time
+        use_curve = False
 
         if not scene.bz_use_custom_mesh:
-            bar_shape = scene.bz_bar_shape
-            vertices = self.getVertices(bar_shape)
-            faces = self.getFaces(bar_shape)
+            if scene.bz_vis_shape in self.data_dict.keys():
+                vertices, faces = self.data_dict[scene.bz_vis_shape]
+            else:
+                use_curve = True
 
         bar_count = scene.bz_bar_count
 
@@ -109,15 +102,25 @@ class BLENDUALIZER_OT_generate_visualizer(bpy.types.Operator):
             name = str(round(low, 1)) + ' | ' + str(round(high, 1))
 
             if not scene.bz_use_custom_mesh:
-                mesh = bpy.data.meshes.new(name)
-                mesh.from_pydata(vertices, [], faces)
-                mesh.update()
-                bar = bpy.data.objects.new(name, mesh)
+                if not use_curve:
+                    mesh = bpy.data.meshes.new(name)
+                    mesh.from_pydata(vertices, [], faces)
+                    mesh.update()
+                    bar = bpy.data.objects.new(name, mesh)
+                else:
+                    curve_data = bpy.data.curves.new(name, 'CURVE')
+                    curve_data.dimensions= '3D'
+                    spline = curve_data.splines.new(type='NURBS')
+                    spline.points.add(bar_count)
+                    for index in range(bar_count - 1):
+                        spline.points[index].co = [(-bar_count / 2) + index, 0.0, 0.0, 1.0]
+                    bar = bpy.data.objects.new(name, curve_data)
             else:
                 bar = bpy.data.objects.new(name, scene.bz_custom_mesh.copy())
 
             scene.collection.children[collection_name].objects.link(bar)
 
+            return {'FINISHED'}
             bar.select_set(True)
             bpy.context.view_layer.objects.active = bar
 
