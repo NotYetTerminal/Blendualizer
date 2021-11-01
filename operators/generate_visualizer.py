@@ -33,13 +33,6 @@ class BLENDUALIZER_OT_generate_visualizer(bpy.types.Operator):
         attack_time = scene.bz_attack_time
         release_time = scene.bz_release_time
         use_curve = False
-
-        if not scene.bz_use_custom_mesh:
-            if scene.bz_vis_shape in self.data_dict.keys():
-                vertices, faces = self.data_dict[scene.bz_vis_shape]
-            else:
-                use_curve = True
-
         bar_count = scene.bz_bar_count
 
         bar_width = scene.bz_bar_width / self.base_size
@@ -94,6 +87,24 @@ class BLENDUALIZER_OT_generate_visualizer(bpy.types.Operator):
             bar_set_empty = bpy.data.objects.new(scene.bz_custom_name, None)
             scene.collection.children[collection_name].objects.link(bar_set_empty)
 
+
+        if not scene.bz_use_custom_mesh:
+            if scene.bz_vis_shape in self.data_dict.keys():
+                vertices, faces = self.data_dict[scene.bz_vis_shape]
+
+                for index in range(len(vertices)):
+                    vertices[index] = (vertices[index][0] * bar_width, vertices[index][1] * amplitude, vertices[index][2] * bar_depth)
+            else:
+                use_curve = True
+                curve_data = bpy.data.curves.new(collection_name, 'CURVE')
+                curve_data.dimensions= '3D'
+                spline = curve_data.splines.new(type='NURBS')
+                spline.points.add(bar_count)
+                for index in range(bar_count - 1):
+                    spline.points[index].co = [(-bar_count / 2) + index, 0.0, 0.0, 1.0]
+                bar = bpy.data.objects.new(collection_name, curve_data)
+
+
         area = bpy.context.area.type
         bpy.context.area.type = 'GRAPH_EDITOR'
 
@@ -107,14 +118,6 @@ class BLENDUALIZER_OT_generate_visualizer(bpy.types.Operator):
                     mesh.from_pydata(vertices, [], faces)
                     mesh.update()
                     bar = bpy.data.objects.new(name, mesh)
-                else:
-                    curve_data = bpy.data.curves.new(name, 'CURVE')
-                    curve_data.dimensions= '3D'
-                    spline = curve_data.splines.new(type='NURBS')
-                    spline.points.add(bar_count)
-                    for index in range(bar_count - 1):
-                        spline.points[index].co = [(-bar_count / 2) + index, 0.0, 0.0, 1.0]
-                    bar = bpy.data.objects.new(name, curve_data)
             else:
                 bar = bpy.data.objects.new(name, scene.bz_custom_mesh.copy())
 
@@ -141,15 +144,9 @@ class BLENDUALIZER_OT_generate_visualizer(bpy.types.Operator):
 
             bar.location = (loc[0], loc[1], loc[2])
 
-            bar.scale.x = bar_width
-            bar.scale.y = amplitude
-            bar.scale.z = bar_depth
-
             if preview_mode:
                 bar.scale.y = amplitude * (math.cos(count * preview_coef) + 1.2) / 2.2
             else:
-                bpy.ops.object.transform_apply(location=False, rotation=False, scale=True)
-
                 bpy.ops.anim.keyframe_insert_menu(type="Scaling")
                 bar.animation_data.action.fcurves[0].lock = True
                 bar.animation_data.action.fcurves[2].lock = True
