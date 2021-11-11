@@ -6,7 +6,6 @@ Maybe I will update with more features
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 Attack Time And Release Time are broken.
-You cannot generate two graphs in the same file if you change these times.
 
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
