@@ -177,8 +177,8 @@ def init_prop():
         items=[("RECTANGLE", "Rectangle", "", "", 1),
                ("TRIANGLE", "Triangle", "", "", 2),
                ("CUBOID", "Cuboid", "", "", 3),
-               ("PYRAMID", "Pyramid", "", "", 4),
-               ('CURVE', 'Curve', '', '', 5)]
+               ("PYRAMID", "Pyramid", "", "", 4)]
+               #('CURVE', 'Curve', '', '', 5)]
     )
 
     bpy.types.Scene.bz_use_custom_mesh = bpy.props.BoolProperty(

@@ -123,7 +123,6 @@ class BLENDUALIZER_OT_generate_visualizer(bpy.types.Operator):
 
             scene.collection.children[collection_name].objects.link(bar)
 
-            return {'FINISHED'}
             bar.select_set(True)
             bpy.context.view_layer.objects.active = bar
 
