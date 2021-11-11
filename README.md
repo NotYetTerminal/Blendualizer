@@ -3,11 +3,6 @@ Blender Music Visualizer.
 
 Maybe I will update with more features
 
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-
-Attack Time And Release Time are broken.
-
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 ## History
 
