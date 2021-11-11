@@ -146,6 +146,8 @@ class BLENDUALIZER_OT_generate_visualizer(bpy.types.Operator):
             if preview_mode:
                 bar.scale.y = amplitude * (math.cos(count * preview_coef) + 1.2) / 2.2
             else:
+                bpy.ops.object.transform_apply(location=False, rotation=False, scale=True) # don't delete this, needed for attack and release time
+
                 bpy.ops.anim.keyframe_insert_menu(type="Scaling")
                 bar.animation_data.action.fcurves[0].lock = True
                 bar.animation_data.action.fcurves[2].lock = True
