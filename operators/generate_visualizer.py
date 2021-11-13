@@ -62,7 +62,7 @@ class BLENDUALIZER_OT_generate_visualizer(bpy.types.Operator):
         arc_start = arc_center - arc_direction * arc_angle / 2
 
         note_step = 120.0 / bar_count
-        a = 2 ** (1.0 / 12.0)
+        a = 2 ** (1.0 / scene.blz_freq_step)
         low = 0.0
         high = 16.0
 
@@ -78,9 +78,6 @@ class BLENDUALIZER_OT_generate_visualizer(bpy.types.Operator):
                 bpy.ops.object.delete()
         else:
             scene.collection.children.link(bpy.data.collections.new(collection_name))
-
-        wm = context.window_manager
-        wm.progress_begin(0, 100.0)
 
         bar_set_empty = scene.collection.children[collection_name].objects.get(scene.bz_custom_name)
         if not bar_set_empty:
@@ -107,6 +104,17 @@ class BLENDUALIZER_OT_generate_visualizer(bpy.types.Operator):
 
         area = bpy.context.area.type
         bpy.context.area.type = 'GRAPH_EDITOR'
+
+        start_freq = scene.blz_start_freq
+        while True:
+            if low > start_freq:
+                break
+            low = high
+            high = low * (a ** note_step)
+
+
+        wm = context.window_manager
+        wm.progress_begin(0, 100.0)
 
         for count in range(0, bar_count):
 

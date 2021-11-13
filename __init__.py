@@ -5,7 +5,7 @@ bl_info = {
     "name": "Blendualizer",
     "description": "Audio Visualizer Creator",
     "author": "532stary4",
-    "version": (0, 1, 0),
+    "version": (0, 2, 0),
     "blender": (2, 93, 0),
     "wiki_url": "https://github.com/532stary4/Blendualizer",
     "tracker_url": "https://github.com/532stary4/Blendualizer/issues",
@@ -34,6 +34,12 @@ class BLENDUALIZER_PT_properties_ui(bpy.types.Panel):
 
         row = layout.row()
         row.prop(scene, "bz_audio_file", icon="SOUND")
+        row = layout.row()
+        split = row.split()
+        col_a = split.column(align=True)
+        col_a.prop(scene, "blz_start_freq")
+        col_b = split.column(align=True)
+        col_b.prop(scene, "blz_freq_step")
 
         row = layout.row()
         row.prop(scene, "bz_audio_channel")
@@ -138,6 +144,22 @@ def init_prop():
         name="Audio Path",
         description="Define path of the audio file",
         subtype="FILE_PATH",
+    )
+
+    bpy.types.Scene.blz_start_freq = bpy.props.IntProperty(
+        name="Starting frequency",
+        description="The starting frequency",
+        default=0,
+        min=0,
+        max=100000
+    )
+
+    bpy.types.Scene.blz_freq_step = bpy.props.IntProperty(
+        name="Frequency Stepping Amount",
+        description="Measured using the root power of 2",
+        default=12,
+        min=1,
+        max=1000
     )
 
     bpy.types.Scene.bz_audio_channel = bpy.props.IntProperty(
