@@ -35,18 +35,28 @@ class BLENDUALIZER_PT_properties_ui(bpy.types.Panel):
         row = layout.row()
         row.prop(scene, "bz_audio_file", icon="SOUND")
         row = layout.row()
+        row.prop(scene, "bz_audio_channel")
+        row = layout.row()
+        split = row.split()
+        col_a = split.column(align=True)
+        col_a.operator("sequencerextra.bz_audio_to_sequencer", icon="SEQ_SEQUENCER")
+        col_b = split.column(align=True)
+        col_b.operator("sequencerextra.bz_audio_remove", icon="CANCEL")
+
+        row = layout.separator()
+
+        row = layout.row()
         split = row.split()
         col_a = split.column(align=True)
         col_a.prop(scene, "blz_start_freq")
         col_b = split.column(align=True)
         col_b.prop(scene, "blz_freq_step")
-
         row = layout.row()
-        row.prop(scene, "bz_audio_channel")
-        row = layout.row()
-        row.operator("sequencerextra.bz_audio_to_sequencer",
-                     icon="SEQ_SEQUENCER")
-        row.operator("sequencerextra.bz_audio_remove", icon="CANCEL")
+        split = row.split()
+        col_a = split.column(align=True)
+        col_a.prop(scene, "bz_attack_time")
+        col_b = split.column(align=True)
+        col_b.prop(scene, "bz_release_time")
 
         row = layout.separator()
         row = layout.label(text="Bars")
@@ -89,9 +99,6 @@ class BLENDUALIZER_PT_properties_ui(bpy.types.Panel):
         col_b = split.column(align=True)
         col_b.prop(scene, "bz_spacing")
         col_b.enabled = not scene.bz_use_radial
-        row = layout.row()
-        row.prop(scene, "bz_attack_time")
-        row.prop(scene, "bz_release_time")
 
         row = layout.separator()
 
@@ -145,6 +152,13 @@ def init_prop():
         description="Define path of the audio file",
         subtype="FILE_PATH",
     )
+    
+    bpy.types.Scene.bz_audio_channel = bpy.props.IntProperty(
+        name="Audio Channel",
+        description="Channel where audio will be added",
+        default=1,
+        min=1
+    )
 
     bpy.types.Scene.blz_start_freq = bpy.props.IntProperty(
         name="Starting frequency",
@@ -160,13 +174,6 @@ def init_prop():
         default=12,
         min=1,
         max=10000
-    )
-
-    bpy.types.Scene.bz_audio_channel = bpy.props.IntProperty(
-        name="Audio Channel",
-        description="Channel where audio will be added",
-        default=1,
-        min=1
     )
 
     bpy.types.Scene.bz_attack_time = bpy.props.FloatProperty(
