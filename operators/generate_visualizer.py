@@ -38,9 +38,6 @@ class BLENDUALIZER_OT_generate_visualizer(bpy.types.Operator):
         bar_width = scene.bz_bar_width / self.base_size
         bar_depth = scene.bz_bar_depth / self.base_size
         amplitude = scene.bz_amplitude / self.base_size
-        print(scene.bz_amplitude)
-        print(amplitude)
-        print(self.base_size)
         spacing = scene.bz_spacing + scene.bz_bar_width
 
         radius = scene.bz_radius
@@ -67,7 +64,7 @@ class BLENDUALIZER_OT_generate_visualizer(bpy.types.Operator):
         note_step = 120.0 / bar_count
         a = 2 ** (1.0 / scene.blz_freq_step)
         low = 0.0
-        high = 16.0
+        high = scene.blz_start_freq
 
         bpy.ops.object.select_all(action="DESELECT")
         collection_name = "Bizualizer Collection"
@@ -92,9 +89,6 @@ class BLENDUALIZER_OT_generate_visualizer(bpy.types.Operator):
             if scene.bz_vis_shape in self.data_dict.keys():
                 vertices, faces = self.data_dict[scene.bz_vis_shape]
 
-                if not preview_mode:
-                    for index in range(len(vertices)):
-                        vertices[index] = (vertices[index][0] * bar_width, vertices[index][1] * amplitude, vertices[index][2] * bar_depth)
             else:
                 use_curve = True
                 curve_data = bpy.data.curves.new(collection_name, 'CURVE')
@@ -108,14 +102,6 @@ class BLENDUALIZER_OT_generate_visualizer(bpy.types.Operator):
 
         area = bpy.context.area.type
         bpy.context.area.type = 'GRAPH_EDITOR'
-
-        start_freq = scene.blz_start_freq
-        while True:
-            if low > start_freq:
-                break
-            low = high
-            high = low * (a ** note_step)
-
 
         wm = context.window_manager
         wm.progress_begin(0, 100.0)
@@ -155,10 +141,14 @@ class BLENDUALIZER_OT_generate_visualizer(bpy.types.Operator):
 
             bar.location = (loc[0], loc[1], loc[2])
 
+            bar.scale.x = bar_width
+            bar.scale.y = amplitude
+            bar.scale.z = bar_depth
+
             if preview_mode:
                 bar.scale.y = amplitude * (math.cos(count * preview_coef) + 1.2) / 2.2
             else:
-                #bpy.ops.object.transform_apply(location=False, rotation=False, scale=True) # don't delete this, needed for attack and release time
+                bpy.ops.object.transform_apply(location=False, rotation=False, scale=True)
 
                 bpy.ops.anim.keyframe_insert_menu(type="Scaling")
                 bar.animation_data.action.fcurves[0].lock = True
@@ -169,10 +159,6 @@ class BLENDUALIZER_OT_generate_visualizer(bpy.types.Operator):
 
                 bar.animation_data.action.fcurves[1].lock = True
 
-                low = high
-                high = low * (a ** note_step)
-
-
             bar.active_material = scene.bz_material
 
             if scene.bz_use_sym:
@@ -182,6 +168,12 @@ class BLENDUALIZER_OT_generate_visualizer(bpy.types.Operator):
                     mirror_modifier.use_axis = (False, True, False)
 
             bar.select_set(False)
+
+            low = high
+            high = low * (a ** note_step)
+
+            if low >= 100000:
+                break
 
             progress = 100 * (count / bar_count)
             wm.progress_update(progress)

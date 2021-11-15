@@ -149,17 +149,17 @@ def init_prop():
     bpy.types.Scene.blz_start_freq = bpy.props.IntProperty(
         name="Starting frequency",
         description="The starting frequency",
-        default=0,
-        min=0,
+        default=16,
+        min=1,
         max=100000
     )
 
     bpy.types.Scene.blz_freq_step = bpy.props.IntProperty(
         name="Freq Step Size",
-        description="The power of the root of 2",
+        description="The power of the root of 2. Bigger number is smaller step",
         default=12,
         min=1,
-        max=1000
+        max=10000
     )
 
     bpy.types.Scene.bz_audio_channel = bpy.props.IntProperty(
