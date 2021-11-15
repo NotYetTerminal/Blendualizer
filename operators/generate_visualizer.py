@@ -38,6 +38,9 @@ class BLENDUALIZER_OT_generate_visualizer(bpy.types.Operator):
         bar_width = scene.bz_bar_width / self.base_size
         bar_depth = scene.bz_bar_depth / self.base_size
         amplitude = scene.bz_amplitude / self.base_size
+        print(scene.bz_amplitude)
+        print(amplitude)
+        print(self.base_size)
         spacing = scene.bz_spacing + scene.bz_bar_width
 
         radius = scene.bz_radius
@@ -89,8 +92,9 @@ class BLENDUALIZER_OT_generate_visualizer(bpy.types.Operator):
             if scene.bz_vis_shape in self.data_dict.keys():
                 vertices, faces = self.data_dict[scene.bz_vis_shape]
 
-                for index in range(len(vertices)):
-                    vertices[index] = (vertices[index][0] * bar_width, vertices[index][1] * amplitude, vertices[index][2] * bar_depth)
+                if not preview_mode:
+                    for index in range(len(vertices)):
+                        vertices[index] = (vertices[index][0] * bar_width, vertices[index][1] * amplitude, vertices[index][2] * bar_depth)
             else:
                 use_curve = True
                 curve_data = bpy.data.curves.new(collection_name, 'CURVE')
@@ -154,7 +158,7 @@ class BLENDUALIZER_OT_generate_visualizer(bpy.types.Operator):
             if preview_mode:
                 bar.scale.y = amplitude * (math.cos(count * preview_coef) + 1.2) / 2.2
             else:
-                bpy.ops.object.transform_apply(location=False, rotation=False, scale=True) # don't delete this, needed for attack and release time
+                #bpy.ops.object.transform_apply(location=False, rotation=False, scale=True) # don't delete this, needed for attack and release time
 
                 bpy.ops.anim.keyframe_insert_menu(type="Scaling")
                 bar.animation_data.action.fcurves[0].lock = True
