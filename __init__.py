@@ -155,8 +155,8 @@ def init_prop():
     )
 
     bpy.types.Scene.blz_freq_step = bpy.props.IntProperty(
-        name="Frequency Stepping Amount",
-        description="Measured using the root power of 2",
+        name="Freq Step Size",
+        description="The power of the root of 2",
         default=12,
         min=1,
         max=1000
