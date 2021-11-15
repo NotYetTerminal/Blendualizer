@@ -7,6 +7,7 @@ Testing Branch
 
 ### v0.2
 ====
+
 Working on custom frequency select
 Fixing bugs
 
