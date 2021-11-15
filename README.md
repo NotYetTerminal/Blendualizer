@@ -8,8 +8,17 @@ Testing Branch
 ### v0.2
 ====
 
-Working on custom frequency select
-Fixing bugs
+Added:
+
+Starting frequency
+
+Frequency step amount adjuster. Default is 12 which would be 12 root 2. The bigger this number the smaller this step will be.
+
+====
+
+Removed:
+
+Annoying bugs
 
 
 ### v0.1
