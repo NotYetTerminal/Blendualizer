@@ -152,7 +152,7 @@ def init_prop():
         description="Define path of the audio file",
         subtype="FILE_PATH",
     )
-    
+
     bpy.types.Scene.bz_audio_channel = bpy.props.IntProperty(
         name="Audio Channel",
         description="Channel where audio will be added",
@@ -161,7 +161,7 @@ def init_prop():
     )
 
     bpy.types.Scene.blz_start_freq = bpy.props.IntProperty(
-        name="Starting frequency",
+        name="Start Frequency",
         description="The starting frequency",
         default=16,
         min=1,

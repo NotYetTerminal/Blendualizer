@@ -20,10 +20,10 @@ class BLENDUALIZER_OT_remove_audio_from_vse(bpy.types.Operator):
         if not scene.sequence_editor:
             return {"FINISHED"}
 
-        audiofile_name = bpy.path.abspath(scene.bz_audio_file).split('\\')[-1]
+        audiofile_name = bpy.path.abspath(scene.bz_audio_file).split('\\')[-1].split('.')[0]
 
         for seqs in scene.sequence_editor.sequences:
-            if seqs.type == "SOUND" and seqs.sound.name == audiofile_name:
+            if seqs.type == "SOUND" and seqs.sound.name.split('.')[0] == audiofile_name:
                 seqs.select = True
                 bpy.ops.sequencer.delete()
 
@@ -31,6 +31,7 @@ class BLENDUALIZER_OT_remove_audio_from_vse(bpy.types.Operator):
 
                 return {"FINISHED"}
 
-        self.report({"WARNING"}, "Sound not found. (Name could contain foreign characters)")
+        if len(scene.sequence_editor.sequences) != 0:
+            self.report({"WARNING"}, "Sound not found. (Name could contain foreign characters)")
 
         return {"FINISHED"}
