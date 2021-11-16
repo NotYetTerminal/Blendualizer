@@ -1,8 +1,5 @@
 # Blendualizer
 
-Testing Branch
-
-
 ## History
 
 ### v0.2
