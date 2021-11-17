@@ -94,10 +94,11 @@ class BLENDUALIZER_OT_generate_visualizer(bpy.types.Operator):
                 curve_data = bpy.data.curves.new(collection_name, 'CURVE')
                 curve_data.dimensions= '3D'
                 spline = curve_data.splines.new(type='NURBS')
-                spline.points.add(bar_count)
-                for index in range(bar_count - 1):
-                    spline.points[index].co = [(-bar_count / 2) + index, 0.0, 0.0, 1.0]
-                bar = bpy.data.objects.new(collection_name, curve_data)
+                spline.points.add(bar_count - 1)
+                #for index in range(bar_count - 1):
+                #    spline.points[index].co = [(-bar_count / 2) + index, 0.0, 0.0, 1.0]
+                curve = bpy.data.objects.new(collection_name, curve_data)
+                scene.collection.children[collection_name].objects.link(curve)
 
 
         area = bpy.context.area.type
@@ -106,8 +107,12 @@ class BLENDUALIZER_OT_generate_visualizer(bpy.types.Operator):
         wm = context.window_manager
         wm.progress_begin(0, 100.0)
 
-        for count in range(0, bar_count):
+        self.report({"INFO"}, str(len(spline.points)))
 
+        for count in range(0, bar_count):
+            
+            self.report({"INFO"}, str(len(spline.points)))
+            self.report({"INFO"}, 'a')
             name = str(round(low, 1)) + ' | ' + str(round(high, 1))
 
             if not scene.bz_use_custom_mesh:
@@ -116,13 +121,13 @@ class BLENDUALIZER_OT_generate_visualizer(bpy.types.Operator):
                     mesh.from_pydata(vertices, [], faces)
                     mesh.update()
                     bar = bpy.data.objects.new(name, mesh)
+                else:
+                    bar = bpy.data.objects.new(name, None)
             else:
                 bar = bpy.data.objects.new(name, scene.bz_custom_mesh.copy())
 
             scene.collection.children[collection_name].objects.link(bar)
 
-            bar.select_set(True)
-            bpy.context.view_layer.objects.active = bar
 
             loc = [0.0, 0.0, 0.0]
 
@@ -139,29 +144,78 @@ class BLENDUALIZER_OT_generate_visualizer(bpy.types.Operator):
             else:
                 loc[0] = (count * spacing) + line_start
 
-            bar.location = (loc[0], loc[1], loc[2])
+            self.report({"INFO"}, str(loc))
+            self.report({"INFO"}, str(count))
+            self.report({"INFO"}, str(len(spline.points)))
+            self.report({"INFO"}, str(len(spline.points)))
 
-            bar.scale.x = bar_width
-            bar.scale.y = amplitude
-            bar.scale.z = bar_depth
-
-            if preview_mode:
-                bar.scale.y = amplitude * (math.cos(count * preview_coef) + 1.2) / 2.2
+            bar.location = [loc[0], loc[1], loc[2]]
+            self.report({"INFO"}, str(len(spline.points)))
+            self.report({"INFO"}, 'b')
+            bar.select_set(True)
+            self.report({"INFO"}, str(len(spline.points)))
+            self.report({"INFO"}, 'c')
+            
+            if not use_curve:
+                bar.scale.x = bar_width
+                bar.scale.y = amplitude
+                bar.scale.z = bar_depth
             else:
-                bpy.ops.object.transform_apply(location=False, rotation=False, scale=True)
+                self.report({"INFO"}, str(len(spline.points)))
+                curve.select_set(True)
+                bpy.context.view_layer.objects.active = curve
+                self.report({"INFO"}, str(len(spline.points)))
 
-                bpy.ops.anim.keyframe_insert_menu(type="Scaling")
+                spline.points[count].co = [loc[0], loc[1], loc[2], 1]
+                spline.points[count].select = True
+                
+                self.report({"INFO"}, str(len(spline.points)))
+                hook_modifier = curve.modifiers.new(name=name, type="HOOK")
+                hook_modifier.object = bar
+
+                bpy.ops.object.mode_set(mode='EDIT')
+                self.report({"INFO"}, str(len(spline.points)))
+                #bpy.ops.object.hook_add_selob()
+                bpy.ops.object.hook_assign(modifier=name)
+
+                bpy.ops.curve.select_all(action='DESELECT')
+                bpy.ops.object.mode_set(mode='OBJECT')
+                curve.select_set(False)
+            
+            
+            if (len(spline.points) != 8):
+                for point in spline.points:
+                    self.report({"INFO"}, str(point.co))
+                return
+
+            self.report({"INFO"}, str(len(spline.points)))
+            self.report({"INFO"}, 'd')
+            if preview_mode:
+                if not use_curve:
+                    bar.scale.y = amplitude * (math.cos(count * preview_coef) + 1.2) / 2.2
+                else:
+                    bar.location.y = amplitude * (math.cos(count * preview_coef) + 1.2) / 2.2
+                
+            else:
+                bpy.context.view_layer.objects.active = bar
+
+                if not use_curve:
+                    bpy.ops.object.transform_apply(location=False, rotation=False, scale=True)
+                    bpy.ops.anim.keyframe_insert_menu(type="Scaling")
+                else:
+                    bpy.ops.anim.keyframe_insert_menu(type="Location")
+
                 bar.animation_data.action.fcurves[0].lock = True
                 bar.animation_data.action.fcurves[2].lock = True
 
                 bpy.ops.graph.sound_bake(filepath=audio_file, low=low, high=high,
-                                         attack=attack_time, release=release_time)
+                                        attack=attack_time, release=release_time)
 
-                bar.animation_data.action.fcurves[1].lock = True
-
+            self.report({"INFO"}, str(len(spline.points)))
+            self.report({"INFO"}, 'e')
             bar.active_material = scene.bz_material
 
-            if scene.bz_use_sym:
+            if scene.bz_use_sym and not use_curve:
                 mirror_modifier = bar.modifiers.new(name="Mirror", type="MIRROR")
                 mirror_modifier.mirror_object = bar_set_empty
                 if not scene.bz_use_radial:
@@ -177,6 +231,12 @@ class BLENDUALIZER_OT_generate_visualizer(bpy.types.Operator):
 
             progress = 100 * (count / bar_count)
             wm.progress_update(progress)
+
+        if scene.bz_use_sym and use_curve:
+            curve.modifiers.new(name="Mirror", type="MIRROR")
+            mirror_modifier.mirror_object = bar_set_empty
+            if not scene.bz_use_radial:
+                mirror_modifier.use_axis = (False, True, False)
             
         bpy.context.area.type = area
 
