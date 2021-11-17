@@ -2,6 +2,7 @@
 
 Testing Branch
 
+Currently working on curves as a visualizer.
 
 ## History
 
