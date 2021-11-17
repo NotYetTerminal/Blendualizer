@@ -95,10 +95,17 @@ class BLENDUALIZER_OT_generate_visualizer(bpy.types.Operator):
                 curve_data.dimensions= '3D'
                 spline = curve_data.splines.new(type='NURBS')
                 spline.points.add(bar_count - 1)
-                #for index in range(bar_count - 1):
-                #    spline.points[index].co = [(-bar_count / 2) + index, 0.0, 0.0, 1.0]
+
                 curve = bpy.data.objects.new('Curve', curve_data)
                 scene.collection.children[collection_name].objects.link(curve)
+                curve.select_set(False)
+
+                '''for index in range(bar_count - 1):
+                    #(-bar_count / 2) + index
+                    spline.points[index].co = [(index * spacing) + line_start, 0, 0, 1]
+                    hook_modifier = curve.modifiers.new(name=str(index), type="HOOK")'''
+
+
 
 
         area = bpy.context.area.type
@@ -142,6 +149,7 @@ class BLENDUALIZER_OT_generate_visualizer(bpy.types.Operator):
             
             
             bar.select_set(True)
+            #bar.scale.y = amplitude
 
             if not use_curve:
                 bar.scale.x = bar_width
@@ -149,47 +157,51 @@ class BLENDUALIZER_OT_generate_visualizer(bpy.types.Operator):
                 bar.scale.z = bar_depth
                 bar.location = [loc[0], loc[1], loc[2]]
             else:
-                curve.select_set(True)
-                bpy.context.view_layer.objects.active = curve
+                #curve.select_set(True)
+                #bpy.context.view_layer.objects.active = curve
 
+                #bpy.ops.object.mode_set(mode='EDIT')
+                bar.location = [0, 0, 0]
                 spline.points[count].co = [loc[0], loc[1], loc[2], 1]
-                spline.points[count].select = True
-                bpy.ops.object.mode_set(mode='EDIT')
                 
                 hook_modifier = curve.modifiers.new(name=name, type="HOOK")
                 hook_modifier.object = bar
+                hook_modifier.vertex_indices_set([count])
 
                 #bpy.ops.object.hook_add_selob()
-                bpy.ops.object.hook_assign(modifier=name)
+                #bpy.ops.object.hook_assign(modifier=name)
 
-                bpy.ops.curve.select_all(action='DESELECT')
-                bpy.ops.object.mode_set(mode='OBJECT')
-                curve.select_set(False)
+                #bpy.ops.curve.select_all(action='DESELECT')
+                #bpy.ops.object.mode_set(mode='OBJECT')
+                #curve.select_set(False)
 
-                bar.location = [loc[0], amplitude, loc[2]]
+                #bar.location = [loc[0], amplitude, loc[2]]
             
-
+            
             if preview_mode:
                 if not use_curve:
                     bar.scale.y = amplitude * (math.cos(count * preview_coef) + 1.2) / 2.2
                 else:
-                    hook_modifier.strength = (math.cos(count * preview_coef) + 1.2) / 2.2
+                    bar.location.y = (math.cos(count * preview_coef) + 1.2) / 2.2
                 
             else:
+                #if not use_curve:
+                bpy.context.view_layer.objects.active = bar
+                bpy.ops.object.transform_apply(location=False, rotation=False, scale=True)
                 if not use_curve:
-                    bpy.context.view_layer.objects.active = bar
-                    bpy.ops.object.transform_apply(location=False, rotation=False, scale=True)
                     bpy.ops.anim.keyframe_insert_menu(type="Scaling")
-
-                    bar.animation_data.action.fcurves[0].lock = True
-                    bar.animation_data.action.fcurves[2].lock = True
-
-                    bpy.ops.graph.sound_bake(filepath=audio_file, low=low, high=high,
-                                             attack=attack_time, release=release_time)
-
-                    bar.select_set(False)
-
                 else:
+                    bpy.ops.anim.keyframe_insert_menu(type="Location")
+
+                bar.animation_data.action.fcurves[0].lock = True
+                bar.animation_data.action.fcurves[2].lock = True
+
+                bpy.ops.graph.sound_bake(filepath=audio_file, low=low, high=high,
+                                            attack=attack_time, release=release_time)
+
+                bar.select_set(False)
+
+                '''else:
                     bar.select_set(False)
                     curve.select_set(True)
 
@@ -200,8 +212,8 @@ class BLENDUALIZER_OT_generate_visualizer(bpy.types.Operator):
                                              attack=attack_time, release=release_time)
                     
                     curve.animation_data.action.fcurves[-1].select = False
-                    curve.select_set(False)
-
+                    curve.select_set(False)'''
+            
 
             bar.active_material = scene.bz_material
 
@@ -221,7 +233,7 @@ class BLENDUALIZER_OT_generate_visualizer(bpy.types.Operator):
             wm.progress_update(progress)
 
         if scene.bz_use_sym and use_curve:
-            curve.modifiers.new(name="Mirror", type="MIRROR")
+            mirror_modifier = curve.modifiers.new(name="Mirror", type="MIRROR")
             mirror_modifier.mirror_object = bar_set_empty
             if not scene.bz_use_radial:
                 mirror_modifier.use_axis = (False, True, False)
