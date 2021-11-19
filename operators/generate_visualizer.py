@@ -155,13 +155,13 @@ class BLENDUALIZER_OT_generate_visualizer(bpy.types.Operator):
                 bar.scale.x = bar_width
                 bar.scale.y = amplitude
                 bar.scale.z = bar_depth
-                bar.location = [loc[0], loc[1], loc[2]]
+                bar.location = (loc[0], loc[1], loc[2])
             else:
                 #curve.select_set(True)
                 #bpy.context.view_layer.objects.active = curve
 
                 #bpy.ops.object.mode_set(mode='EDIT')
-                bar.location = [0, 0, 0]
+                bar.location = (0, 0, 0)
                 spline.points[count].co = [loc[0], loc[1], loc[2], 1]
                 
                 hook_modifier = curve.modifiers.new(name=name, type="HOOK")
@@ -243,9 +243,13 @@ class BLENDUALIZER_OT_generate_visualizer(bpy.types.Operator):
         original_location = bar_set_empty.location[:]
         original_rotation = bar_set_empty.rotation_euler[:]
         original_scale = bar_set_empty.scale[:]
-        bar_set_empty.location = (0.0, 0.0, 0.0)
-        bar_set_empty.rotation_euler = (0.0, 0.0, 0.0)
-        bar_set_empty.scale = (1.0, 1.0, 1.0)
+        bar_set_empty.location = (0, 0, 0)
+        bar_set_empty.rotation_euler = (0, 0, 0)
+
+        if not use_curve:
+            bar_set_empty.scale = (1, 1, 1)
+        else:
+            bar_set_empty.scale = (1, 1.0 / amplitude, 1)
 
         for thing in scene.collection.children[collection_name].objects:
             if not thing.parent and len(thing.children) == 0:
