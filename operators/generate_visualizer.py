@@ -61,7 +61,7 @@ class BLENDUALIZER_OT_generate_visualizer(bpy.types.Operator):
         if self.use_radial:
             self.radius = scene.blz_radius
             arc_angle_deg = scene.blz_arc_angle
-            arc_center_deg = scene.blz_arc_center_offset
+            arc_center_deg = scene.blz_arc_center_offset + 90
             flip_direction = scene.blz_flip_direction
 
             if scene.blz_use_sym and flip_direction:
@@ -73,7 +73,7 @@ class BLENDUALIZER_OT_generate_visualizer(bpy.types.Operator):
 
             self.arc_angle = arc_angle_deg / 360 * 2 * math.pi
             self.arc_center = -arc_center_deg / 360 * 2 * math.pi
-            self.arc_start = self.arc_center - self.arc_direction * self.arc_angle / 2
+            self.arc_start = self.arc_center - (self.arc_direction * self.arc_angle / 2)
 
         note_step = 120.0 / self.bar_count
         a = 2 ** (1.0 / scene.blz_freq_step)
@@ -186,8 +186,7 @@ class BLENDUALIZER_OT_generate_visualizer(bpy.types.Operator):
             if scene.blz_use_sym and not self.use_curve:
                 mirror_modifier = vis_object.modifiers.new(name="Mirror", type="MIRROR")
                 mirror_modifier.mirror_object = bar_set_empty
-                if not scene.blz_use_radial:
-                    mirror_modifier.use_axis = (False, True, False)
+                mirror_modifier.use_axis = (False, True, False)
 
             low = high
             high = low * (a ** note_step)
@@ -290,9 +289,11 @@ class BLENDUALIZER_OT_generate_visualizer(bpy.types.Operator):
         location = [0.0, 0.0, 0.0]
 
         if scene.blz_use_radial and not self.use_curve:
-            angle = self.arc_start + (self.arc_direction * ((count + 0.5) / self.bar_count) * self.arc_angle)
+            angle = self.arc_direction * ((count + 0.5) / self.bar_count) * self.arc_angle
             if scene.blz_use_sym:
                 angle /= 2
+            
+            angle +=  self.arc_start
 
             vis_object.rotation_euler[2] = angle
             location[0] = -math.sin(angle) * self.radius

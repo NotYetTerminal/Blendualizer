@@ -304,8 +304,8 @@ def init_prop():
         name="Arc Rotation",
         description="Angle where radial visualizer is centered",
         default=0,
-        min=-180,
-        max=180
+        min=-360,
+        max=360
     )
 
     bpy.types.Scene.blz_flip_direction = bpy.props.BoolProperty(
