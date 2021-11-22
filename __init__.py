@@ -266,7 +266,7 @@ def init_prop():
     bpy.types.Scene.blz_curve_buffer_front = bpy.props.IntProperty(
         name="Front Buffer",
         description="Number of buffer empties infront of curve",
-        default=2,
+        default=4,
         min=0,
         max=100
     )
@@ -274,7 +274,7 @@ def init_prop():
     bpy.types.Scene.blz_curve_buffer_end = bpy.props.IntProperty(
         name="End Buffer",
         description="Number of buffer empties behind of curve",
-        default=2,
+        default=4,
         min=0,
         max=100
     )
