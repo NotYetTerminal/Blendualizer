@@ -2,7 +2,7 @@ import bpy
 import math
 
 class BLENDUALIZER_OT_generate_visualizer(bpy.types.Operator):
-    bl_idname = "object.bz_generate"
+    bl_idname = "object.blz_generate"
     bl_label = "(re)Generate Visualizer"
     bl_description = "Generates visualizer bars and animation"
 
@@ -22,7 +22,7 @@ class BLENDUALIZER_OT_generate_visualizer(bpy.types.Operator):
     @classmethod
     def poll(self, context):
         scene = context.scene
-        if scene.bz_audio_file == "":
+        if scene.blz_audio_file == "":
             return False
         else:
             return True
@@ -30,81 +30,86 @@ class BLENDUALIZER_OT_generate_visualizer(bpy.types.Operator):
     def execute(self, context):
         scene = context.scene
         scene.frame_current = 1
-        attack_time = scene.bz_attack_time
-        release_time = scene.bz_release_time
-        use_curve = False
-        bar_count = scene.bz_bar_count
+        self.audio_file = bpy.path.abspath(scene.blz_audio_file)
+        
+        self.attack_time = scene.blz_attack_time
+        self.release_time = scene.blz_release_time
+        self.bar_count = scene.blz_bar_count
+        self.use_radial = scene.blz_use_radial
 
-        bar_width = scene.bz_bar_width / self.base_size
-        bar_depth = scene.bz_bar_depth / self.base_size
-        amplitude = scene.bz_amplitude / self.base_size
-        spacing = scene.bz_spacing + scene.bz_bar_width
+        if not scene.blz_use_custom_mesh and scene.blz_vis_shape not in self.data_dict.keys():
+            self.use_curve = True
+        else:
+            self.use_curve = False
 
-        radius = scene.bz_radius
-        arc_angle_deg = scene.bz_arc_angle
-        arc_center_deg = scene.bz_arc_center_offset
-        if scene.bz_use_sym and scene.bz_flip_direction:
-            arc_center_deg += 180
+        bar_width = scene.blz_bar_width / self.base_size
+        bar_depth = scene.blz_bar_depth / self.base_size
+        amplitude = scene.blz_amplitude / self.base_size
+        self.spacing = scene.blz_spacing + scene.blz_bar_width
+        self.line_start = -(self.bar_count * self.spacing) / 2 + self.spacing / 2
 
-        flip_direction = scene.bz_flip_direction
-        preview_mode = scene.bz_preview_mode
-        audio_file = bpy.path.abspath(scene.bz_audio_file)
+        preview_coef = 8 * math.pi / self.bar_count
+        preview_mode = scene.blz_preview_mode
 
-        line_start = -(bar_count * spacing) / 2 + spacing / 2
-        preview_coef = 8 * math.pi / bar_count
+        if not self.use_curve:
+            curve_buffer_front = 0
+            curve_buffer_end = 0
+        else:
+            curve_buffer_front = scene.blz_curve_buffer_front
+            curve_buffer_end = scene.blz_curve_buffer_end
 
-        arc_direction = -1
-        if flip_direction:
-            arc_direction = 1
+        if self.use_radial:
+            self.radius = scene.blz_radius
+            arc_angle_deg = scene.blz_arc_angle
+            arc_center_deg = scene.blz_arc_center_offset
+            flip_direction = scene.blz_flip_direction
 
-        arc_angle = arc_angle_deg / 360 * 2 * math.pi
-        arc_center = -arc_center_deg / 360 * 2 * math.pi
-        arc_start = arc_center - arc_direction * arc_angle / 2
+            if scene.blz_use_sym and flip_direction:
+                arc_center_deg += 180
 
-        note_step = 120.0 / bar_count
+            self.arc_direction = -1
+            if flip_direction:
+                self.arc_direction = 1
+
+            self.arc_angle = arc_angle_deg / 360 * 2 * math.pi
+            self.arc_center = -arc_center_deg / 360 * 2 * math.pi
+            self.arc_start = self.arc_center - self.arc_direction * self.arc_angle / 2
+
+        note_step = 120.0 / self.bar_count
         a = 2 ** (1.0 / scene.blz_freq_step)
         low = 0.0
         high = scene.blz_start_freq
 
         bpy.ops.object.select_all(action="DESELECT")
-        collection_name = "Bizualizer Collection"
-        collection_present = bpy.data.collections.get(collection_name)
+        self.collection_name = "Bizualizer Collection"
+        collection_present = bpy.data.collections.get(self.collection_name)
 
         if collection_present:
-            empty_present = collection_present.objects.get(scene.bz_custom_name)
+            empty_present = collection_present.objects.get(scene.blz_custom_name)
             if empty_present:
-                for bar in empty_present.children:
-                    bar.select_set(True)
+                for vis_object in empty_present.children:
+                    vis_object.select_set(True)
                 bpy.ops.object.delete()
         else:
-            scene.collection.children.link(bpy.data.collections.new(collection_name))
+            scene.collection.children.link(bpy.data.collections.new(self.collection_name))
 
-        bar_set_empty = scene.collection.children[collection_name].objects.get(scene.bz_custom_name)
+        bar_set_empty = scene.collection.children[self.collection_name].objects.get(scene.blz_custom_name)
         if not bar_set_empty:
-            bar_set_empty = bpy.data.objects.new(scene.bz_custom_name, None)
-            scene.collection.children[collection_name].objects.link(bar_set_empty)
+            bar_set_empty = bpy.data.objects.new(scene.blz_custom_name, None)
+            scene.collection.children[self.collection_name].objects.link(bar_set_empty)
 
 
-        if not scene.bz_use_custom_mesh:
-            if scene.bz_vis_shape in self.data_dict.keys():
-                vertices, faces = self.data_dict[scene.bz_vis_shape]
+        if self.use_curve:
+            curve_data = bpy.data.curves.new(self.collection_name, 'CURVE')
+            curve_data.dimensions= '3D'
+            spline = curve_data.splines.new(type='NURBS')
 
-            else:
-                use_curve = True
-                curve_data = bpy.data.curves.new(collection_name, 'CURVE')
-                curve_data.dimensions= '3D'
-                spline = curve_data.splines.new(type='NURBS')
-                spline.points.add(bar_count - 1)
+            total_points = self.bar_count - 1 + curve_buffer_front + curve_buffer_end
+            spline.points.add(total_points)
 
-                curve = bpy.data.objects.new('Curve', curve_data)
-                scene.collection.children[collection_name].objects.link(curve)
-                curve.select_set(False)
-
-                '''for index in range(bar_count - 1):
-                    #(-bar_count / 2) + index
-                    spline.points[index].co = [(index * spacing) + line_start, 0, 0, 1]
-                    hook_modifier = curve.modifiers.new(name=str(index), type="HOOK")'''
-
+            curve = bpy.data.objects.new('Curve', curve_data)
+            scene.collection.children[self.collection_name].objects.link(curve)
+            curve.select_set(False)
 
 
 
@@ -114,113 +119,74 @@ class BLENDUALIZER_OT_generate_visualizer(bpy.types.Operator):
         wm = context.window_manager
         wm.progress_begin(0, 100.0)
 
-        for count in range(0, bar_count):
-            
-            name = str(round(low, 1)) + ' | ' + str(round(high, 1))
+        '''
+        if use_curve:
+            for count in range(0, curve_buffer_front):
+                name = 'Curve buffer ' + str(-count)
+                empty = bpy.data.objects.new(name, None)
+                scene.collection.children[self.collection_name].objects.link(empty)
 
-            if not scene.bz_use_custom_mesh:
-                if not use_curve:
-                    mesh = bpy.data.meshes.new(name)
-                    mesh.from_pydata(vertices, [], faces)
-                    mesh.update()
-                    bar = bpy.data.objects.new(name, mesh)
+                loc = [0.0, 0.0, 0.0]
+
+                if scene.blz_use_radial:
+                    if scene.blz_use_sym:
+                        angle = arc_start + (arc_direction * ((count + 0.5) / self.bar_count) * (arc_angle / 2))
+                    else:
+                        angle = arc_start + (arc_direction * ((count + 0.5) / self.bar_count) * arc_angle)
+
+                    empty.rotation_euler[2] = angle
+                    loc[0] = -math.sin(angle) * radius
+                    loc[1] = math.cos(angle) * radius
+
                 else:
-                    bar = bpy.data.objects.new(name, None)
-            else:
-                bar = bpy.data.objects.new(name, scene.bz_custom_mesh.copy())
-
-            scene.collection.children[collection_name].objects.link(bar)
-
-
-            loc = [0.0, 0.0, 0.0]
-
-            if scene.bz_use_radial:
-                if scene.bz_use_sym:
-                    angle = arc_start + (arc_direction * ((count + 0.5) / bar_count) * (arc_angle / 2))
-                else:
-                    angle = arc_start + (arc_direction * ((count + 0.5) / bar_count) * arc_angle)
-
-                bar.rotation_euler[2] = angle
-                loc[0] = -math.sin(angle) * radius
-                loc[1] = math.cos(angle) * radius
-
-            else:
-                loc[0] = (count * spacing) + line_start
-            
-            
-            bar.select_set(True)
-            #bar.scale.y = amplitude
-
-            if not use_curve:
-                bar.scale.x = bar_width
-                bar.scale.y = amplitude
-                bar.scale.z = bar_depth
-                bar.location = (loc[0], loc[1], loc[2])
-            else:
-                #curve.select_set(True)
-                #bpy.context.view_layer.objects.active = curve
-
-                #bpy.ops.object.mode_set(mode='EDIT')
-                bar.location = (0, 0, 0)
+                    loc[0] = -(count * spacing) + line_start
+                
+                
+                empty.location = (0, 0, 0)
                 spline.points[count].co = [loc[0], loc[1], loc[2], 1]
                 
                 hook_modifier = curve.modifiers.new(name=name, type="HOOK")
-                hook_modifier.object = bar
+                hook_modifier.object = empty
                 hook_modifier.vertex_indices_set([count])
 
-                #bpy.ops.object.hook_add_selob()
-                #bpy.ops.object.hook_assign(modifier=name)
+        '''
 
-                #bpy.ops.curve.select_all(action='DESELECT')
-                #bpy.ops.object.mode_set(mode='OBJECT')
-                #curve.select_set(False)
+        for count in range(0, self.bar_count):
+            
+            name = str(round(low, 1)) + ' | ' + str(round(high, 1))
 
-                #bar.location = [loc[0], amplitude, loc[2]]
+            vis_object = self.makeVisObject(scene, name)
+            location = self.getVisObjectLocationAndRotation(scene, vis_object, count)
+            
+            if not self.use_curve:
+                vis_object.scale.x = bar_width
+                vis_object.scale.y = amplitude
+                vis_object.scale.z = bar_depth
+                vis_object.location = location
+            else:
+                vis_object.location = (0, 0, 0)
+                spline.points[count+curve_buffer_front].co = [*location, 1]
+
+                hook_modifier = curve.modifiers.new(name=name, type="HOOK")
+                hook_modifier.object = vis_object
+                hook_modifier.vertex_indices_set([count])
             
             
             if preview_mode:
-                if not use_curve:
-                    bar.scale.y = amplitude * (math.cos(count * preview_coef) + 1.2) / 2.2
+                if not self.use_curve:
+                    vis_object.scale.y = amplitude * (math.cos(count * preview_coef) + 1.2) / 2.2
                 else:
-                    bar.location.y = (math.cos(count * preview_coef) + 1.2) / 2.2
-                
+                    vis_object.location.y = (math.cos(count * preview_coef) + 1.2) / 2.2
             else:
-                #if not use_curve:
-                bpy.context.view_layer.objects.active = bar
-                bpy.ops.object.transform_apply(location=False, rotation=False, scale=True)
-                if not use_curve:
-                    bpy.ops.anim.keyframe_insert_menu(type="Scaling")
-                else:
-                    bpy.ops.anim.keyframe_insert_menu(type="Location")
-
-                bar.animation_data.action.fcurves[0].lock = True
-                bar.animation_data.action.fcurves[2].lock = True
-
-                bpy.ops.graph.sound_bake(filepath=audio_file, low=low, high=high,
-                                            attack=attack_time, release=release_time)
-
-                bar.select_set(False)
-
-                '''else:
-                    bar.select_set(False)
-                    curve.select_set(True)
-
-                    bpy.context.view_layer.objects.active = curve
-                    curve.modifiers[count].keyframe_insert(data_path='strength')
-
-                    bpy.ops.graph.sound_bake(filepath=audio_file, low=low, high=high,
-                                             attack=attack_time, release=release_time)
-                    
-                    curve.animation_data.action.fcurves[-1].select = False
-                    curve.select_set(False)'''
+                self.bakeSound(vis_object, low, high)
             
+            if not self.use_curve:
+                vis_object.active_material = scene.blz_material
 
-            bar.active_material = scene.bz_material
-
-            if scene.bz_use_sym and not use_curve:
-                mirror_modifier = bar.modifiers.new(name="Mirror", type="MIRROR")
+            if scene.blz_use_sym and not self.use_curve:
+                mirror_modifier = vis_object.modifiers.new(name="Mirror", type="MIRROR")
                 mirror_modifier.mirror_object = bar_set_empty
-                if not scene.bz_use_radial:
+                if not scene.blz_use_radial:
                     mirror_modifier.use_axis = (False, True, False)
 
             low = high
@@ -229,13 +195,45 @@ class BLENDUALIZER_OT_generate_visualizer(bpy.types.Operator):
             if low >= 100000:
                 break
 
-            progress = 100 * (count / bar_count)
+            progress = 100 * (count / self.bar_count)
             wm.progress_update(progress)
+        
+        '''
+        
+        if use_curve:
+            for count in range(0, curve_buffer_end):
+                name = 'Curve buffer ' + str(count+self.bar_count)
+                empty = bpy.data.objects.new(name, None)
+                scene.collection.children[self.collection_name].objects.link(empty)
 
-        if scene.bz_use_sym and use_curve:
+                loc = [0.0, 0.0, 0.0]
+
+                if scene.blz_use_radial:
+                    if scene.blz_use_sym:
+                        angle = arc_start + (arc_direction * ((count + 0.5) / self.bar_count) * (arc_angle / 2))
+                    else:
+                        angle = arc_start + (arc_direction * ((count + 0.5) / self.bar_count) * arc_angle)
+
+                    empty.rotation_euler[2] = angle
+                    loc[0] = -math.sin(angle) * radius
+                    loc[1] = math.cos(angle) * radius
+
+                else:
+                    loc[0] = ((count + self.bar_count) * spacing) + line_start
+                
+                
+                empty.location = (0, 0, 0)
+                spline.points[count+curve_buffer_front+self.bar_count].co = [loc[0], loc[1], loc[2], 1]
+                
+                hook_modifier = curve.modifiers.new(name=name, type="HOOK")
+                hook_modifier.object = empty
+                hook_modifier.vertex_indices_set([count])
+        '''
+
+        if scene.blz_use_sym and self.use_curve:
             mirror_modifier = curve.modifiers.new(name="Mirror", type="MIRROR")
             mirror_modifier.mirror_object = bar_set_empty
-            if not scene.bz_use_radial:
+            if not scene.blz_use_radial:
                 mirror_modifier.use_axis = (False, True, False)
             
         bpy.context.area.type = area
@@ -246,14 +244,14 @@ class BLENDUALIZER_OT_generate_visualizer(bpy.types.Operator):
         bar_set_empty.location = (0, 0, 0)
         bar_set_empty.rotation_euler = (0, 0, 0)
 
-        if not use_curve:
+        if not self.use_curve:
             bar_set_empty.scale = (1, 1, 1)
         else:
             bar_set_empty.scale = (1, 1.0 / amplitude, 1)
 
-        for thing in scene.collection.children[collection_name].objects:
-            if not thing.parent and len(thing.children) == 0:
-                thing.select_set(True)
+        for vis_object in scene.collection.children[self.collection_name].objects:
+            if not vis_object.parent and len(vis_object.children) == 0:
+                vis_object.select_set(True)
 
         bar_set_empty.select_set(True)
         context.view_layer.objects.active = bar_set_empty
@@ -261,7 +259,6 @@ class BLENDUALIZER_OT_generate_visualizer(bpy.types.Operator):
 
         bpy.ops.object.select_all(action="DESELECT")
         bar_set_empty.select_set(True)
-        # bpy.context.view_layer.objects.active = bar_set_empty
 
         bar_set_empty.location = original_location
         bar_set_empty.rotation_euler = original_rotation
@@ -269,3 +266,58 @@ class BLENDUALIZER_OT_generate_visualizer(bpy.types.Operator):
 
         wm.progress_end()
         return {"FINISHED"}
+    
+
+    def makeVisObject(self, scene, name):
+        if not scene.blz_use_custom_mesh:
+            if not self.use_curve:
+                vertices, faces = self.data_dict[scene.blz_vis_shape]
+
+                mesh = bpy.data.meshes.new(name)
+                mesh.from_pydata(vertices, [], faces)
+                mesh.update()
+                vis_object = bpy.data.objects.new(name, mesh)
+            else:
+                vis_object = bpy.data.objects.new(name, None)
+        else:
+            vis_object = bpy.data.objects.new(name, scene.blz_custom_mesh.copy())
+
+        scene.collection.children[self.collection_name].objects.link(vis_object)
+        return vis_object
+    
+
+    def getVisObjectLocationAndRotation(self, scene, vis_object, count):
+        location = [0.0, 0.0, 0.0]
+
+        if scene.blz_use_radial and not self.use_curve:
+            angle = self.arc_start + (self.arc_direction * ((count + 0.5) / self.bar_count) * self.arc_angle)
+            if scene.blz_use_sym:
+                angle /= 2
+
+            vis_object.rotation_euler[2] = angle
+            location[0] = -math.sin(angle) * self.radius
+            location[1] = math.cos(angle) * self.radius
+
+        else:
+            location[0] = (count * self.spacing) + self.line_start
+        
+        return location
+    
+
+    def bakeSound(self, vis_object, low, high):
+        vis_object.select_set(True)
+        bpy.context.view_layer.objects.active = vis_object
+        bpy.ops.object.transform_apply(location=False, rotation=False, scale=True)
+
+        if not self.use_curve:
+            bpy.ops.anim.keyframe_insert_menu(type="Scaling")
+        else:
+            bpy.ops.anim.keyframe_insert_menu(type="Location")
+
+        vis_object.animation_data.action.fcurves[0].lock = True
+        vis_object.animation_data.action.fcurves[2].lock = True
+
+        bpy.ops.graph.sound_bake(filepath=self.audio_file, low=low, high=high,
+                                 attack=self.attack_time, release=self.release_time)
+
+        vis_object.select_set(False)
