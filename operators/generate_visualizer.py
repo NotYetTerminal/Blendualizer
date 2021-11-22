@@ -110,7 +110,10 @@ class BLENDUALIZER_OT_generate_visualizer(bpy.types.Operator):
             total_points = self.total_bar_count - 1
             spline.points.add(total_points)
 
+            curve_data.bevel_depth = 0.1
             curve = bpy.data.objects.new('Curve', curve_data)
+            curve.active_material = scene.blz_material
+
             scene.collection.children[self.collection_name].objects.link(curve)
             curve.select_set(False)
 
@@ -221,6 +224,8 @@ class BLENDUALIZER_OT_generate_visualizer(bpy.types.Operator):
         for vis_object in scene.collection.children[self.collection_name].objects:
             if not vis_object.parent and len(vis_object.children) == 0:
                 vis_object.select_set(True)
+                if self.use_curve:
+                    vis_object.scale = (1, 1.0 / amplitude, 1)
 
         bar_set_empty.select_set(True)
         context.view_layer.objects.active = bar_set_empty
