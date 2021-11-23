@@ -44,7 +44,7 @@ class BLENDUALIZER_OT_generate_visualizer(bpy.types.Operator):
 
         bar_width = scene.blz_bar_width / self.base_size
         bar_depth = scene.blz_bar_depth / self.base_size
-        amplitude = scene.blz_amplitude / self.base_size
+        self.amplitude = scene.blz_amplitude / self.base_size
         self.spacing = scene.blz_spacing + scene.blz_bar_width
 
 
@@ -129,32 +129,34 @@ class BLENDUALIZER_OT_generate_visualizer(bpy.types.Operator):
             
             name = "Buffer Front " + str(count)
 
-            vis_object = self.makeVisObject(scene, name)
+            vis_object = self.makeVisObject(scene, name, context)
             location, angle = self.getVisObjectLocationAndRotation(scene, count)
             
-            vis_object.location = (0, 0, 0)
+            #vis_object.location = (0, 0, 0)
             spline.points[count].co = [*location, 1]
 
             hook_modifier = curve.modifiers.new(name=name, type="HOOK")
             hook_modifier.object = vis_object
             hook_modifier.vertex_indices_set([count])
-            
+        
         for count in range(0, vis_object_count):
             
             name = str(round(low, 1)) + ' | ' + str(round(high, 1))
 
-            vis_object = self.makeVisObject(scene, name)
             location, angle = self.getVisObjectLocationAndRotation(scene, count + curve_buffer_front)
             
             if not self.use_curve:
+                vis_object = self.makeVisObject(scene, name)
+
                 vis_object.rotation_euler[2] = angle
                 vis_object.scale.x = bar_width
-                vis_object.scale.y = amplitude
+                vis_object.scale.y = self.amplitude
                 vis_object.scale.z = bar_depth
                 vis_object.location = location
 
             else:
-                vis_object.location = (0, 0, 0)
+                vis_object = self.makeVisObject(scene, name, context)
+                #vis_object.location = (0, 0, 0)
                 spline.points[count + curve_buffer_front].co = [*location, 1]
 
                 hook_modifier = curve.modifiers.new(name=name, type="HOOK")
@@ -164,7 +166,7 @@ class BLENDUALIZER_OT_generate_visualizer(bpy.types.Operator):
             
             if preview_mode:
                 if not self.use_curve:
-                    vis_object.scale.y = amplitude * (math.cos(count * preview_coef) + 1.2) / 2.2
+                    vis_object.scale.y = self.amplitude * (math.cos(count * preview_coef) + 1.2) / 2.2
                 else:
                     vis_object.location.y = (math.cos(count * preview_coef) + 1.2) / 2.2
             else:
@@ -191,10 +193,10 @@ class BLENDUALIZER_OT_generate_visualizer(bpy.types.Operator):
             
             name = "Buffer End " + str(count)
 
-            vis_object = self.makeVisObject(scene, name)
+            vis_object = self.makeVisObject(scene, name, context)
             location, angle = self.getVisObjectLocationAndRotation(scene, count + curve_buffer_front + vis_object_count)
             
-            vis_object.location = (0, 0, 0)
+            #vis_object.location = (0, 0, 0)
             spline.points[count + curve_buffer_front + vis_object_count].co = [*location, 1]
 
             hook_modifier = curve.modifiers.new(name=name, type="HOOK")
@@ -216,16 +218,11 @@ class BLENDUALIZER_OT_generate_visualizer(bpy.types.Operator):
         bar_set_empty.location = (0, 0, 0)
         bar_set_empty.rotation_euler = (0, 0, 0)
 
-        if not self.use_curve:
-            bar_set_empty.scale = (1, 1, 1)
-        else:
-            bar_set_empty.scale = (1, 1.0 / amplitude, 1)
+        bar_set_empty.scale = (1, 1, 1)
 
         for vis_object in scene.collection.children[self.collection_name].objects:
-            if not vis_object.parent and len(vis_object.children) == 0:
-                vis_object.select_set(True)
-                if self.use_curve:
-                    vis_object.scale = (1, 1.0 / amplitude, 1)
+            if not vis_object.parent and (len(vis_object.children) == 0 or vis_object.name[0:13] == "Scaling Empty") and vis_object != bar_set_empty:
+                vis_object.sele_set(True)
 
         bar_set_empty.select_set(True)
         context.view_layer.objects.active = bar_set_empty
@@ -242,7 +239,7 @@ class BLENDUALIZER_OT_generate_visualizer(bpy.types.Operator):
         return {"FINISHED"}
     
 
-    def makeVisObject(self, scene, name):
+    def makeVisObject(self, scene, name, context = None):
         if not scene.blz_use_custom_mesh:
             if not self.use_curve:
                 vertices, faces = self.data_dict[scene.blz_vis_shape]
@@ -251,14 +248,27 @@ class BLENDUALIZER_OT_generate_visualizer(bpy.types.Operator):
                 mesh.from_pydata(vertices, [], faces)
                 mesh.update()
                 vis_object = bpy.data.objects.new(name, mesh)
+
             else:
+                vis_object_empty = bpy.data.objects.new("Scaling Empty " + name, None)
+                vis_object_empty.scale = (1, 1.0 / self.amplitude, 1)
+                scene.collection.children[self.collection_name].objects.link(vis_object_empty)
+                
                 vis_object = bpy.data.objects.new(name, None)
+                vis_object.scale = (1, 1.0 / self.amplitude, 1)
+                scene.collection.children[self.collection_name].objects.link(vis_object)
+
+                vis_object.select_set(True)
+                vis_object_empty.select_set(True)
+                context.view_layer.objects.active = vis_object_empty
+                bpy.ops.object.parent_set()
+
+                vis_object_empty.scale = (1, 1, 1)
         else:
             vis_object = bpy.data.objects.new(name, scene.blz_custom_mesh.copy())
 
         scene.collection.children[self.collection_name].objects.link(vis_object)
         return vis_object
-    
 
     def getVisObjectLocationAndRotation(self, scene, count):
         location = [0.0, 0.0, 0.0]

@@ -187,7 +187,7 @@ def init_prop():
         name="Attack Time",
         description="How long it takes for the hull curve to rise (the lower the value the steeper it can rise)",
         default=0.1,
-        min=0,
+        min=0.01,
         max=2
     )
 
@@ -195,7 +195,7 @@ def init_prop():
         name="Release Time",
         description="How long it takes for the hull curve to fall (the lower the value the steeper it can fall)",
         default=0.2,
-        min=0,
+        min=0.01,
         max=5
     )
 
