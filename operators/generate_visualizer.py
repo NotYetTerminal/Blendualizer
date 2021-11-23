@@ -133,6 +133,7 @@ class BLENDUALIZER_OT_generate_visualizer(bpy.types.Operator):
             location, angle = self.getVisObjectLocationAndRotation(scene, count)
             
             #vis_object.location = (0, 0, 0)
+            vis_object.parent.rotation_euler[2] = angle
             spline.points[count].co = [*location, 1]
 
             hook_modifier = curve.modifiers.new(name=name, type="HOOK")
@@ -140,7 +141,6 @@ class BLENDUALIZER_OT_generate_visualizer(bpy.types.Operator):
             hook_modifier.vertex_indices_set([count])
         
         for count in range(0, vis_object_count):
-            print(name)
             name = str(round(low, 1)) + ' | ' + str(round(high, 1))
 
             location, angle = self.getVisObjectLocationAndRotation(scene, count + curve_buffer_front)
@@ -157,6 +157,7 @@ class BLENDUALIZER_OT_generate_visualizer(bpy.types.Operator):
             else:
                 vis_object = self.makeVisObject(scene, name, context)
                 #vis_object.location = (0, 0, 0)
+                vis_object.parent.rotation_euler[2] = angle
                 spline.points[count + curve_buffer_front].co = [*location, 1]
 
                 hook_modifier = curve.modifiers.new(name=name, type="HOOK")
@@ -197,6 +198,7 @@ class BLENDUALIZER_OT_generate_visualizer(bpy.types.Operator):
             location, angle = self.getVisObjectLocationAndRotation(scene, count + curve_buffer_front + vis_object_count)
             
             #vis_object.location = (0, 0, 0)
+            vis_object.parent.rotation_euler[2] = angle
             spline.points[count + curve_buffer_front + vis_object_count].co = [*location, 1]
 
             hook_modifier = curve.modifiers.new(name=name, type="HOOK")
@@ -276,7 +278,7 @@ class BLENDUALIZER_OT_generate_visualizer(bpy.types.Operator):
         location = [0.0, 0.0, 0.0]
         angle = 0
 
-        if scene.blz_use_radial and not self.use_curve:
+        if scene.blz_use_radial:
             angle = self.arc_direction * ((count + 0.5) / self.total_object_count) * self.arc_angle
             if scene.blz_use_sym:
                 angle /= 2

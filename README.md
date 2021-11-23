@@ -6,6 +6,19 @@ Currently working on curves as a visualizer.
 
 ## History
 
+### v0.3
+
+Added:
+
+Can now make a curve as a visualizer
+
+
+====
+
+Rmoved:
+
+Bug where radial symmetry would not work
+
 ### v0.2
 ====
 
