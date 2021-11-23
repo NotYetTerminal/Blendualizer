@@ -140,7 +140,7 @@ class BLENDUALIZER_OT_generate_visualizer(bpy.types.Operator):
             hook_modifier.vertex_indices_set([count])
         
         for count in range(0, vis_object_count):
-            
+            print(name)
             name = str(round(low, 1)) + ' | ' + str(round(high, 1))
 
             location, angle = self.getVisObjectLocationAndRotation(scene, count + curve_buffer_front)
@@ -217,12 +217,11 @@ class BLENDUALIZER_OT_generate_visualizer(bpy.types.Operator):
         original_scale = bar_set_empty.scale[:]
         bar_set_empty.location = (0, 0, 0)
         bar_set_empty.rotation_euler = (0, 0, 0)
-
         bar_set_empty.scale = (1, 1, 1)
 
         for vis_object in scene.collection.children[self.collection_name].objects:
             if not vis_object.parent and (len(vis_object.children) == 0 or vis_object.name[0:13] == "Scaling Empty") and vis_object != bar_set_empty:
-                vis_object.sele_set(True)
+                vis_object.select_set(True)
 
         bar_set_empty.select_set(True)
         context.view_layer.objects.active = bar_set_empty
@@ -248,6 +247,7 @@ class BLENDUALIZER_OT_generate_visualizer(bpy.types.Operator):
                 mesh.from_pydata(vertices, [], faces)
                 mesh.update()
                 vis_object = bpy.data.objects.new(name, mesh)
+                scene.collection.children[self.collection_name].objects.link(vis_object)
 
             else:
                 vis_object_empty = bpy.data.objects.new("Scaling Empty " + name, None)
@@ -264,10 +264,12 @@ class BLENDUALIZER_OT_generate_visualizer(bpy.types.Operator):
                 bpy.ops.object.parent_set()
 
                 vis_object_empty.scale = (1, 1, 1)
+                vis_object.select_set(False)
+                vis_object_empty.select_set(False)
         else:
             vis_object = bpy.data.objects.new(name, scene.blz_custom_mesh.copy())
+            scene.collection.children[self.collection_name].objects.link(vis_object)
 
-        scene.collection.children[self.collection_name].objects.link(vis_object)
         return vis_object
 
     def getVisObjectLocationAndRotation(self, scene, count):
@@ -293,9 +295,9 @@ class BLENDUALIZER_OT_generate_visualizer(bpy.types.Operator):
     def bakeSound(self, vis_object, low, high):
         vis_object.select_set(True)
         bpy.context.view_layer.objects.active = vis_object
-        bpy.ops.object.transform_apply(location=False, rotation=False, scale=True)
 
         if not self.use_curve:
+            bpy.ops.object.transform_apply(location=False, rotation=False, scale=True)
             bpy.ops.anim.keyframe_insert_menu(type="Scaling")
         else:
             bpy.ops.anim.keyframe_insert_menu(type="Location")
