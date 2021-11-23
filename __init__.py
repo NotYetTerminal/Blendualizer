@@ -84,7 +84,7 @@ class BLENDUALIZER_PT_properties_ui(bpy.types.Panel):
         col_b.enabled = scene.blz_use_custom_mesh
 
         row = layout.row()
-        row.prop(scene, "blz_bar_count")
+        row.prop(scene, "blz_vis_object_count")
         row = layout.row()
         split = row.split()
         col_a = split.column(align=True)
@@ -228,7 +228,7 @@ def init_prop():
         type=bpy.types.Mesh
     )
 
-    bpy.types.Scene.blz_bar_count = bpy.props.IntProperty(
+    bpy.types.Scene.blz_vis_object_count = bpy.props.IntProperty(
         name="Bar Count",
         description="The number of bars to make",
         default=64,

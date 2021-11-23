@@ -34,7 +34,7 @@ class BLENDUALIZER_OT_generate_visualizer(bpy.types.Operator):
         
         self.attack_time = scene.blz_attack_time
         self.release_time = scene.blz_release_time
-        bar_count = scene.blz_bar_count
+        vis_object_count = scene.blz_vis_object_count
         self.use_radial = scene.blz_use_radial
 
         if not scene.blz_use_custom_mesh and scene.blz_vis_shape not in self.data_dict.keys():
@@ -55,10 +55,10 @@ class BLENDUALIZER_OT_generate_visualizer(bpy.types.Operator):
             curve_buffer_front = scene.blz_curve_buffer_front
             curve_buffer_end = scene.blz_curve_buffer_end
         
-        self.total_bar_count = bar_count + curve_buffer_end + curve_buffer_front
-        self.line_start = -(self.total_bar_count * self.spacing) / 2 + self.spacing / 2
+        self.total_object_count = vis_object_count + curve_buffer_end + curve_buffer_front
+        self.line_start = -(self.total_object_count * self.spacing) / 2 + self.spacing / 2
         
-        preview_coef = 8 * math.pi / self.total_bar_count
+        preview_coef = 8 * math.pi / self.total_object_count
         preview_mode = scene.blz_preview_mode
 
         if self.use_radial:
@@ -78,7 +78,7 @@ class BLENDUALIZER_OT_generate_visualizer(bpy.types.Operator):
             self.arc_center = -arc_center_deg / 360 * 2 * math.pi
             self.arc_start = self.arc_center - (self.arc_direction * self.arc_angle / 2)
 
-        note_step = 120.0 / bar_count
+        note_step = 120.0 / vis_object_count
         a = 2 ** (1.0 / scene.blz_freq_step)
         low = 0.0
         high = scene.blz_start_freq
@@ -107,7 +107,7 @@ class BLENDUALIZER_OT_generate_visualizer(bpy.types.Operator):
             curve_data.dimensions= '3D'
             spline = curve_data.splines.new(type='NURBS')
 
-            total_points = self.total_bar_count - 1
+            total_points = self.total_object_count - 1
             spline.points.add(total_points)
 
             curve_data.bevel_depth = 0.1
@@ -139,7 +139,7 @@ class BLENDUALIZER_OT_generate_visualizer(bpy.types.Operator):
             hook_modifier.object = vis_object
             hook_modifier.vertex_indices_set([count])
             
-        for count in range(0, bar_count):
+        for count in range(0, vis_object_count):
             
             name = str(round(low, 1)) + ' | ' + str(round(high, 1))
 
@@ -184,7 +184,7 @@ class BLENDUALIZER_OT_generate_visualizer(bpy.types.Operator):
             if low >= 100000:
                 break
 
-            progress = 100 * (count / bar_count)
+            progress = 100 * (count / vis_object_count)
             wm.progress_update(progress)
         
         for count in range(0, curve_buffer_end):
@@ -192,14 +192,14 @@ class BLENDUALIZER_OT_generate_visualizer(bpy.types.Operator):
             name = "Buffer End " + str(count)
 
             vis_object = self.makeVisObject(scene, name)
-            location, angle = self.getVisObjectLocationAndRotation(scene, count + curve_buffer_front + bar_count)
+            location, angle = self.getVisObjectLocationAndRotation(scene, count + curve_buffer_front + vis_object_count)
             
             vis_object.location = (0, 0, 0)
-            spline.points[count + curve_buffer_front + bar_count].co = [*location, 1]
+            spline.points[count + curve_buffer_front + vis_object_count].co = [*location, 1]
 
             hook_modifier = curve.modifiers.new(name=name, type="HOOK")
             hook_modifier.object = vis_object
-            hook_modifier.vertex_indices_set([count + curve_buffer_front + bar_count])
+            hook_modifier.vertex_indices_set([count + curve_buffer_front + vis_object_count])
 
 
         if scene.blz_use_sym and self.use_curve:
@@ -265,7 +265,7 @@ class BLENDUALIZER_OT_generate_visualizer(bpy.types.Operator):
         angle = 0
 
         if scene.blz_use_radial and not self.use_curve:
-            angle = self.arc_direction * ((count + 0.5) / self.total_bar_count) * self.arc_angle
+            angle = self.arc_direction * ((count + 0.5) / self.total_object_count) * self.arc_angle
             if scene.blz_use_sym:
                 angle /= 2
             
