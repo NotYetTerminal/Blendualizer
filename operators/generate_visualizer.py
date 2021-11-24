@@ -51,13 +51,18 @@ class BLENDUALIZER_OT_generate_visualizer(bpy.types.Operator):
         if not self.use_curve:
             curve_buffer_front = 0
             curve_buffer_end = 0
+            curve_buffer_between = 0
         else:
             curve_buffer_front = scene.blz_curve_buffer_front
+            curve_buffer_front_strength = scene.blz_curve_buffer_front_strength
             curve_buffer_end = scene.blz_curve_buffer_end
+            curve_buffer_end_strength = scene.blz_curve_buffer_end_strength
+            curve_buffer_between = scene.blz_curve_buffer_between
         
-        self.total_object_count = vis_object_count + curve_buffer_end + curve_buffer_front
+        vis_object_with_buffer_between = vis_object_count * (curve_buffer_between + 1) - curve_buffer_between
+        self.total_object_count = vis_object_with_buffer_between + curve_buffer_end + curve_buffer_front
         self.line_start = -(self.total_object_count * self.spacing) / 2 + self.spacing / 2
-        
+
         preview_coef = 8 * math.pi / self.total_object_count
         preview_mode = scene.blz_preview_mode
 
@@ -117,7 +122,7 @@ class BLENDUALIZER_OT_generate_visualizer(bpy.types.Operator):
             scene.collection.children[self.collection_name].objects.link(curve_object)
             curve_object.select_set(False)
 
-            if self.use_radial:
+            if self.use_radial and not scene.blz_use_sym:
                 spline.use_cyclic_u = True
                 spline.use_cyclic_v = True
 
@@ -145,17 +150,21 @@ class BLENDUALIZER_OT_generate_visualizer(bpy.types.Operator):
             
             #vis_object.location = (0, 0, 0)
             vis_object.parent.rotation_euler[2] = angle
-            spline.points[count].co = [*location, 1]
+            spline.points[count].co = [*location, 1 - (count / (curve_buffer_front - 1)) * (1 - curve_buffer_front_strength)]
 
             hook_modifier = curve_object.modifiers.new(name=name, type="HOOK")
             hook_modifier.object = vis_object
             hook_modifier.vertex_indices_set([count])
         
-        for count in range(0, vis_object_count):
+        for count in range(0, vis_object_with_buffer_between):
+            
             name = str(round(low, 1)) + ' | ' + str(round(high, 1))
-
             location, angle = self.getVisObjectLocationAndRotation(scene, count + curve_buffer_front)
             
+            if (count + 1) % (curve_buffer_between + 1) == 0:
+                spline.points[count + curve_buffer_front].co = [*location, scene.blz_curve_buffer_between_strength]
+                continue
+
             if not self.use_curve:
                 vis_object = self.makeVisObject(scene, name)
 
@@ -199,7 +208,7 @@ class BLENDUALIZER_OT_generate_visualizer(bpy.types.Operator):
             if low >= 100000:
                 break
 
-            progress = 100 * (count / vis_object_count)
+            progress = 100 * (count / vis_object_with_buffer_between)
             wm.progress_update(progress)
         
         for count in range(0, curve_buffer_end):
@@ -207,15 +216,15 @@ class BLENDUALIZER_OT_generate_visualizer(bpy.types.Operator):
             name = "Buffer End " + str(count)
 
             vis_object = self.makeVisObject(scene, name, context)
-            location, angle = self.getVisObjectLocationAndRotation(scene, count + curve_buffer_front + vis_object_count)
+            location, angle = self.getVisObjectLocationAndRotation(scene, count + curve_buffer_front + vis_object_with_buffer_between)
             
             #vis_object.location = (0, 0, 0)
             vis_object.parent.rotation_euler[2] = angle
-            spline.points[count + curve_buffer_front + vis_object_count].co = [*location, 1]
+            spline.points[count + curve_buffer_front + vis_object_with_buffer_between].co = [*location, curve_buffer_end_strength + (count / (curve_buffer_end - 1)) * (1 - curve_buffer_end_strength)]
             
             hook_modifier = curve_object.modifiers.new(name=name, type="HOOK")
             hook_modifier.object = vis_object
-            hook_modifier.vertex_indices_set([count + curve_buffer_front + vis_object_count])
+            hook_modifier.vertex_indices_set([count + curve_buffer_front + vis_object_with_buffer_between])
 
         if scene.blz_use_sym and self.use_curve:
             mirror_modifier = curve_object.modifiers.new(name="Mirror", type="MIRROR")
@@ -233,10 +242,10 @@ class BLENDUALIZER_OT_generate_visualizer(bpy.types.Operator):
             curve_object.select_set(True)
             bpy.context.view_layer.objects.active = curve_object
             bpy.ops.object.mode_set(mode='EDIT')
-            
 
             for hook in curve_object.modifiers:
-                bpy.ops.object.hook_reset(modifier=hook.name)
+                if hook.type == 'HOOK':
+                    bpy.ops.object.hook_reset(modifier=hook.name)
                 
             bpy.ops.object.mode_set(mode='OBJECT')
             curve_object.select_set(False)

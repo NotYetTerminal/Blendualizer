@@ -100,14 +100,25 @@ class BLENDUALIZER_PT_properties_ui(bpy.types.Panel):
         col_b.prop(scene, "blz_spacing")
         col_b.enabled = not scene.blz_use_radial
 
+
         row = layout.row()
         split = row.split()
         col_a = split.column(align=True)
         col_a.prop(scene, "blz_curve_buffer_front")
         col_b = split.column(align=True)
-        col_b.prop(scene, "blz_curve_buffer_end")
-
-        row = layout.separator()
+        col_b.prop(scene, "blz_curve_buffer_front_strength")        
+        row = layout.row()
+        split = row.split()
+        col_a = split.column(align=True)
+        col_a.prop(scene, "blz_curve_buffer_end")
+        col_b = split.column(align=True)
+        col_b.prop(scene, "blz_curve_buffer_end_strength")
+        row = layout.row()
+        split = row.split()
+        col_a = split.column(align=True)
+        col_a.prop(scene, "blz_curve_buffer_between")
+        col_b = split.column(align=True)
+        col_b.prop(scene, "blz_curve_buffer_between_strength")
 
         row = layout.row()
         row.prop(scene, "blz_use_radial")
@@ -265,19 +276,51 @@ def init_prop():
 
     bpy.types.Scene.blz_curve_buffer_front = bpy.props.IntProperty(
         name="Front Buffer",
-        description="Number of buffer empties infront of curve",
-        default=2,
+        description="Number of buffer points infront the curve",
+        default=3,
         min=0,
         max=100
     )
 
+    bpy.types.Scene.blz_curve_buffer_front_strength = bpy.props.FloatProperty(
+        name="Strength",
+        description="Strength of front buffer points faloff start (ends at 1)",
+        default=0.5,
+        min=0.01,
+        max=1
+    )
+
     bpy.types.Scene.blz_curve_buffer_end = bpy.props.IntProperty(
         name="End Buffer",
-        description="Number of buffer empties behind of curve",
-        default=2,
+        description="Number of buffer points behind the curve",
+        default=3,
         min=0,
         max=100
     )
+
+    bpy.types.Scene.blz_curve_buffer_end_strength = bpy.props.FloatProperty(
+        name="Strength",
+        description="Strength of end buffer points faloff start (ends at 1)",
+        default=0.5,
+        min=0.01,
+        max=1
+    )
+
+    bpy.types.Scene.blz_curve_buffer_between = bpy.props.IntProperty(
+        name="Inbetween Buffer",
+        description="Number of buffer points between moving points of the curve",
+        default=1,
+        min=0,
+        max=100
+    )
+
+    bpy.types.Scene.blz_curve_buffer_between_strength = bpy.props.FloatProperty(
+        name="Strength",
+        description="Strength of buffer points between moving points of the curve",
+        default=0.5,
+        min=0.01,
+        max=10
+    )    
 
     bpy.types.Scene.blz_use_radial = bpy.props.BoolProperty(
         name="Use Radial",
