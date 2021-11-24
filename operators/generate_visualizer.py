@@ -117,6 +117,17 @@ class BLENDUALIZER_OT_generate_visualizer(bpy.types.Operator):
             scene.collection.children[self.collection_name].objects.link(curve_object)
             curve_object.select_set(False)
 
+            if self.use_radial:
+                spline.use_cyclic_u = True
+                spline.use_cyclic_v = True
+
+            else:
+                spline.use_endpoint_u = True
+                spline.use_endpoint_v = True
+
+            if preview_mode:
+                vis_object_list = []
+
 
 
         area = bpy.context.area.type
@@ -169,6 +180,7 @@ class BLENDUALIZER_OT_generate_visualizer(bpy.types.Operator):
                 if not self.use_curve:
                     vis_object.scale.y = self.amplitude * (math.cos(count * preview_coef) + 1.2) / 2.2
                 else:
+                    vis_object_list.append(vis_object)
                     vis_object.location.y = (math.cos(count * preview_coef) + 1.2) / 2.2
             else:
                 self.bakeSound(vis_object, low, high)
@@ -212,30 +224,28 @@ class BLENDUALIZER_OT_generate_visualizer(bpy.types.Operator):
                 mirror_modifier.use_axis = (False, True, False)
         
         if self.use_curve:
+            if preview_mode:
+                location_list = []
+                for vis_object in vis_object_list:
+                    location_list.append([*vis_object.location])
+                    vis_object.location = (0, 0, 0)
+
             curve_object.select_set(True)
             bpy.context.view_layer.objects.active = curve_object
             bpy.ops.object.mode_set(mode='EDIT')
             
-            if preview_mode:
-                location_list = []
-                for point in spline.points:
-                    print(point.co)
-                    location_list.append([*point.co])
-                    point.co = (0, 0, 0, 1)
 
             for hook in curve_object.modifiers:
                 bpy.ops.object.hook_reset(modifier=hook.name)
-            
-            if preview_mode:
-                index = 0
-                print('new')
-                for point in spline.points:
-                    print(location_list[index])
-                    point.co = location_list[index]
-                    index += 1
                 
             bpy.ops.object.mode_set(mode='OBJECT')
             curve_object.select_set(False)
+
+            if preview_mode:
+                index = 0
+                for vis_object in vis_object_list:
+                    vis_object.location = location_list[index]
+                    index += 1
 
             
         bpy.context.area.type = area
