@@ -103,7 +103,7 @@ class BLENDUALIZER_OT_generate_visualizer(bpy.types.Operator):
 
 
         if self.use_curve:
-            curve_data = bpy.data.curves.new(self.collection_name, 'CURVE')
+            curve_data = bpy.data.curves.new(scene.blz_custom_name, 'CURVE')
             curve_data.dimensions= '3D'
             spline = curve_data.splines.new(type='NURBS')
 
@@ -111,11 +111,11 @@ class BLENDUALIZER_OT_generate_visualizer(bpy.types.Operator):
             spline.points.add(total_points)
 
             curve_data.bevel_depth = 0.1
-            curve = bpy.data.objects.new('Curve', curve_data)
-            curve.active_material = scene.blz_material
+            curve_object = bpy.data.objects.new('Curve', curve_data)
+            curve_object.active_material = scene.blz_material
 
-            scene.collection.children[self.collection_name].objects.link(curve)
-            curve.select_set(False)
+            scene.collection.children[self.collection_name].objects.link(curve_object)
+            curve_object.select_set(False)
 
 
 
@@ -136,7 +136,7 @@ class BLENDUALIZER_OT_generate_visualizer(bpy.types.Operator):
             vis_object.parent.rotation_euler[2] = angle
             spline.points[count].co = [*location, 1]
 
-            hook_modifier = curve.modifiers.new(name=name, type="HOOK")
+            hook_modifier = curve_object.modifiers.new(name=name, type="HOOK")
             hook_modifier.object = vis_object
             hook_modifier.vertex_indices_set([count])
         
@@ -160,7 +160,7 @@ class BLENDUALIZER_OT_generate_visualizer(bpy.types.Operator):
                 vis_object.parent.rotation_euler[2] = angle
                 spline.points[count + curve_buffer_front].co = [*location, 1]
 
-                hook_modifier = curve.modifiers.new(name=name, type="HOOK")
+                hook_modifier = curve_object.modifiers.new(name=name, type="HOOK")
                 hook_modifier.object = vis_object
                 hook_modifier.vertex_indices_set([count + curve_buffer_front])
             
@@ -200,17 +200,43 @@ class BLENDUALIZER_OT_generate_visualizer(bpy.types.Operator):
             #vis_object.location = (0, 0, 0)
             vis_object.parent.rotation_euler[2] = angle
             spline.points[count + curve_buffer_front + vis_object_count].co = [*location, 1]
-
-            hook_modifier = curve.modifiers.new(name=name, type="HOOK")
+            
+            hook_modifier = curve_object.modifiers.new(name=name, type="HOOK")
             hook_modifier.object = vis_object
             hook_modifier.vertex_indices_set([count + curve_buffer_front + vis_object_count])
 
-
         if scene.blz_use_sym and self.use_curve:
-            mirror_modifier = curve.modifiers.new(name="Mirror", type="MIRROR")
+            mirror_modifier = curve_object.modifiers.new(name="Mirror", type="MIRROR")
             mirror_modifier.mirror_object = bar_set_empty
             if not scene.blz_use_radial:
                 mirror_modifier.use_axis = (False, True, False)
+        
+        if self.use_curve:
+            curve_object.select_set(True)
+            bpy.context.view_layer.objects.active = curve_object
+            bpy.ops.object.mode_set(mode='EDIT')
+            
+            if preview_mode:
+                location_list = []
+                for point in spline.points:
+                    print(point.co)
+                    location_list.append([*point.co])
+                    point.co = (0, 0, 0, 1)
+
+            for hook in curve_object.modifiers:
+                bpy.ops.object.hook_reset(modifier=hook.name)
+            
+            if preview_mode:
+                index = 0
+                print('new')
+                for point in spline.points:
+                    print(location_list[index])
+                    point.co = location_list[index]
+                    index += 1
+                
+            bpy.ops.object.mode_set(mode='OBJECT')
+            curve_object.select_set(False)
+
             
         bpy.context.area.type = area
 
