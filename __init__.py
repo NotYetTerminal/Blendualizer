@@ -43,8 +43,12 @@ class BLENDUALIZER_PT_properties_ui(bpy.types.Panel):
         col_b = split.column(align=True)
         col_b.operator("sequencerextra.blz_audio_remove", icon="CANCEL")
 
-        row = layout.separator()
 
+        row = layout.separator()
+        row = layout.label(text="Frequency")
+
+        row = layout.row()
+        row.prop(scene, "blz_vis_object_count")
         row = layout.row()
         split = row.split()
         col_a = split.column(align=True)
@@ -58,16 +62,16 @@ class BLENDUALIZER_PT_properties_ui(bpy.types.Panel):
         col_b = split.column(align=True)
         col_b.prop(scene, "blz_release_time")
 
+
         row = layout.separator()
-        row = layout.label(text="Bars")
+        row = layout.label(text="Visualizer")
 
         row = layout.row()
         split = row.split()
         col_a = split.column(align=True)
-        col_a.label(text="Bar Set Name:")
+        col_a.label(text="Visualizer Name:")
         col_b = split.column(align=True)
         col_b.prop(scene, "blz_custom_name")
-
         row = layout.row()
         split = row.split()
         col_a = split.column(align=True)
@@ -83,8 +87,10 @@ class BLENDUALIZER_PT_properties_ui(bpy.types.Panel):
         col_b.prop(scene, "blz_custom_mesh")
         col_b.enabled = scene.blz_use_custom_mesh
 
-        row = layout.row()
-        row.prop(scene, "blz_vis_object_count")
+
+        row = layout.separator()
+        row = layout.label(text="Mesh")
+
         row = layout.row()
         split = row.split()
         col_a = split.column(align=True)
@@ -100,6 +106,8 @@ class BLENDUALIZER_PT_properties_ui(bpy.types.Panel):
         col_b.prop(scene, "blz_spacing")
         col_b.enabled = not scene.blz_use_radial
 
+        row = layout.separator()
+        row = layout.label(text="Curve")
 
         row = layout.row()
         split = row.split()
@@ -120,8 +128,13 @@ class BLENDUALIZER_PT_properties_ui(bpy.types.Panel):
         col_b = split.column(align=True)
         col_b.prop(scene, "blz_curve_buffer_between_strength")
 
+
+        row = layout.separator()
         row = layout.row()
-        row.prop(scene, "blz_use_radial")
+        col_a = split.column(align=True)
+        col_a.label(text="Radial")
+        col_b = split.column(align=True)
+        col_b.prop(scene, "blz_use_radial")
 
         row = layout.row()
         split = row.split()
@@ -178,6 +191,13 @@ def init_prop():
         min=1
     )
 
+    bpy.types.Scene.blz_vis_object_count = bpy.props.IntProperty(
+        name="Segment Count",
+        description="The number of frequency segments to make",
+        default=64,
+        min=1
+    )
+
     bpy.types.Scene.blz_start_freq = bpy.props.IntProperty(
         name="Start Frequency",
         description="The starting frequency",
@@ -212,13 +232,13 @@ def init_prop():
 
     bpy.types.Scene.blz_custom_name = bpy.props.StringProperty(
         name="",
-        description="Define the name",
-        default="blz_bar"
+        description="The name of visualizer set. If you change the name it will make a new visualizer",
+        default="blz_visualizer"
     )
 
     bpy.types.Scene.blz_vis_shape = bpy.props.EnumProperty(
         name="",
-        description="The shape of the bars",
+        description="The shape of the visualizer",
         default="RECTANGLE",
         items=[("RECTANGLE", "Rectangle", "", "", 1),
                ("TRIANGLE", "Triangle", "", "", 2),
@@ -229,21 +249,14 @@ def init_prop():
 
     bpy.types.Scene.blz_use_custom_mesh = bpy.props.BoolProperty(
         name="Custom Mesh",
-        description="Select mesh",
+        description="Select custom mesh. Objects are stretched in their Y direction",
         default=False
     )
 
     bpy.types.Scene.blz_custom_mesh = bpy.props.PointerProperty(
         name="",
-        description="Mesh to use",
+        description="Select custom mesh. Objects are stretched in their Y direction",
         type=bpy.types.Mesh
-    )
-
-    bpy.types.Scene.blz_vis_object_count = bpy.props.IntProperty(
-        name="Bar Count",
-        description="The number of bars to make",
-        default=64,
-        min=1
     )
 
     bpy.types.Scene.blz_bar_width = bpy.props.FloatProperty(

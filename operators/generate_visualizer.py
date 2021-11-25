@@ -22,10 +22,10 @@ class BLENDUALIZER_OT_generate_visualizer(bpy.types.Operator):
     @classmethod
     def poll(self, context):
         scene = context.scene
-        if scene.blz_audio_file == "":
-            return False
-        else:
+        if scene.blz_audio_file != "" or scene.blz_preview_mode:
             return True
+        else:
+            return False
 
     def execute(self, context):
         scene = context.scene
