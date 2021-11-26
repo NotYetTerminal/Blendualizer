@@ -153,7 +153,7 @@ class BLENDUALIZER_OT_generate_visualizer(bpy.types.Operator):
             name = str(round(low, 1)) + ' | ' + str(round(high, 1))
             location, angle = self.getVisObjectLocationAndRotation(scene, count + curve_buffer_front)
             
-            if self.use_curve and (count + 1) % (curve_buffer_between + 1) == 0:
+            if self.use_curve and curve_buffer_between != 0 and (count + 1) % (curve_buffer_between + 1) == 0:
                 spline.points[count + curve_buffer_front].co = [*location, scene.blz_curve_buffer_between_strength]
                 continue
 
@@ -218,6 +218,7 @@ class BLENDUALIZER_OT_generate_visualizer(bpy.types.Operator):
                     vis_object.location = (0, 0, 0)
 
             curve_object.select_set(True)
+            curve_object.active_material = scene.blz_material
             bpy.context.view_layer.objects.active = curve_object
             bpy.ops.object.mode_set(mode='EDIT')
 

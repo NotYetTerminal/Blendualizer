@@ -131,6 +131,7 @@ class BLENDUALIZER_PT_properties_ui(bpy.types.Panel):
 
         row = layout.separator()
         row = layout.row()
+        split = row.split()
         col_a = split.column(align=True)
         col_a.label(text="Radial")
         col_b = split.column(align=True)
