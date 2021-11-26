@@ -59,25 +59,24 @@ class BLENDUALIZER_OT_generate_visualizer(bpy.types.Operator):
             curve_buffer_end_strength = scene.blz_curve_buffer_end_strength
             curve_buffer_between = scene.blz_curve_buffer_between
         
+        if scene.blz_flip_direction:
+            self.flip_direction = 1
+        else:
+            self.flip_direction = -1
+
         vis_object_with_buffer_between = vis_object_count * (curve_buffer_between + 1) - curve_buffer_between
         self.total_object_count = vis_object_with_buffer_between + curve_buffer_end + curve_buffer_front
-        self.line_start = -(self.total_object_count * self.spacing) / 2 + self.spacing / 2
+        self.line_start = self.flip_direction * (self.total_object_count * self.spacing) / 2 + self.spacing / 2
 
         preview_coef = 8 * math.pi / vis_object_count
         preview_mode = scene.blz_preview_mode
 
+
         if self.use_radial:
             self.radius = scene.blz_radius
             arc_angle_deg = scene.blz_arc_angle
-            arc_center_deg = scene.blz_arc_center_offset + 90
-            flip_direction = scene.blz_flip_direction
-
-            if scene.blz_use_sym and flip_direction:
-                arc_center_deg += 180
-
-            self.arc_direction = -1
-            if flip_direction:
-                self.arc_direction = 1
+            arc_center_deg = scene.blz_arc_center_offset + 180 + (90 * self.flip_direction)
+            self.arc_direction = self.flip_direction
 
             self.arc_angle = arc_angle_deg / 360 * 2 * math.pi
             self.arc_center = -arc_center_deg / 360 * 2 * math.pi
@@ -153,7 +152,7 @@ class BLENDUALIZER_OT_generate_visualizer(bpy.types.Operator):
             name = str(round(low, 1)) + ' | ' + str(round(high, 1))
             location, angle = self.getVisObjectLocationAndRotation(scene, count + curve_buffer_front)
             
-            if self.use_curve and curve_buffer_between != 0 and (count + 1) % (curve_buffer_between + 1) == 0:
+            if self.use_curve and curve_buffer_between != 0 and (count + curve_buffer_between + 1) % (curve_buffer_between + 1) != 0:
                 spline.points[count + curve_buffer_front].co = [*location, scene.blz_curve_buffer_between_strength]
                 continue
 
@@ -267,7 +266,7 @@ class BLENDUALIZER_OT_generate_visualizer(bpy.types.Operator):
     def makeBuffers(self, context, buffer_name, start, end, spline, curve_object, buffer_strength, is_front):        
         for count in range(start, end):
             
-            name = buffer_name + str(count)
+            name = buffer_name + str(count - start)
 
             vis_object = self.makeVisObject(context.scene, name, context)
             location, angle = self.getVisObjectLocationAndRotation(context.scene, count)
@@ -333,7 +332,7 @@ class BLENDUALIZER_OT_generate_visualizer(bpy.types.Operator):
             location[1] = math.cos(angle) * self.radius
 
         else:
-            location[0] = (count * self.spacing) + self.line_start
+            location[0] = -(count * self.spacing * self.flip_direction) + self.line_start
         
         return location, angle
     

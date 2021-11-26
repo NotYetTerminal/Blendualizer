@@ -48,7 +48,11 @@ class BLENDUALIZER_PT_properties_ui(bpy.types.Panel):
         row = layout.label(text="Frequency")
 
         row = layout.row()
-        row.prop(scene, "blz_vis_object_count")
+        split = row.split()
+        col_a = split.column(align=True)
+        col_a.prop(scene, "blz_vis_object_count")
+        col_b = split.column(align=True)
+        col_b.prop(scene, "blz_flip_direction")
         row = layout.row()
         split = row.split()
         col_a = split.column(align=True)
@@ -131,11 +135,7 @@ class BLENDUALIZER_PT_properties_ui(bpy.types.Panel):
 
         row = layout.separator()
         row = layout.row()
-        split = row.split()
-        col_a = split.column(align=True)
-        col_a.label(text="Radial")
-        col_b = split.column(align=True)
-        col_b.prop(scene, "blz_use_radial")
+        row.label(text="Radial")
 
         row = layout.row()
         split = row.split()
@@ -143,8 +143,7 @@ class BLENDUALIZER_PT_properties_ui(bpy.types.Panel):
         col_a.prop(scene, "blz_radius")
         col_a.enabled = scene.blz_use_radial
         col_b = split.column(align=True)
-        col_b.prop(scene, "blz_flip_direction")
-        col_b.enabled = scene.blz_use_radial
+        col_b.prop(scene, "blz_use_radial")
 
         row = layout.row()
         split = row.split()
@@ -197,6 +196,12 @@ def init_prop():
         description="The number of frequency segments to make",
         default=64,
         min=1
+    )
+
+    bpy.types.Scene.blz_flip_direction = bpy.props.BoolProperty(
+        name="Flip Direction",
+        description="Arrange the bars in reverse direction",
+        default=False
     )
 
     bpy.types.Scene.blz_start_freq = bpy.props.IntProperty(
@@ -363,12 +368,6 @@ def init_prop():
         default=0,
         min=-360,
         max=360
-    )
-
-    bpy.types.Scene.blz_flip_direction = bpy.props.BoolProperty(
-        name="Flip Direction",
-        description="Arrange the bars in reverse direction",
-        default=False
     )
 
     bpy.types.Scene.blz_use_sym = bpy.props.BoolProperty(
