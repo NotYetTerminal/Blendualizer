@@ -4,6 +4,7 @@ Blender Music Visualizer.
 
 Same use as the Bizualizer addon.
 
+=======
 
 ## History
 
