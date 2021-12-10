@@ -5,7 +5,7 @@ bl_info = {
     "name": "Blendualizer",
     "description": "Audio Visualizer Creator",
     "author": "532stary4",
-    "version": (0, 2, 0),
+    "version": (0, 3, 0),
     "blender": (2, 93, 0),
     "wiki_url": "https://github.com/532stary4/Blendualizer",
     "tracker_url": "https://github.com/532stary4/Blendualizer/issues",
@@ -33,18 +33,26 @@ class BLENDUALIZER_PT_properties_ui(bpy.types.Panel):
         row = layout.label(text="Audio")
 
         row = layout.row()
-        row.prop(scene, "bz_audio_file", icon="SOUND")
+        row.prop(scene, "blz_audio_file", icon="SOUND")
         row = layout.row()
-        row.prop(scene, "bz_audio_channel")
+        row.prop(scene, "blz_audio_channel")
         row = layout.row()
         split = row.split()
         col_a = split.column(align=True)
-        col_a.operator("sequencerextra.bz_audio_to_sequencer", icon="SEQ_SEQUENCER")
+        col_a.operator("sequencerextra.blz_audio_to_sequencer", icon="SEQ_SEQUENCER")
         col_b = split.column(align=True)
-        col_b.operator("sequencerextra.bz_audio_remove", icon="CANCEL")
+        col_b.operator("sequencerextra.blz_audio_remove", icon="CANCEL")
+
 
         row = layout.separator()
+        row = layout.label(text="Frequency")
 
+        row = layout.row()
+        split = row.split()
+        col_a = split.column(align=True)
+        col_a.prop(scene, "blz_vis_object_count")
+        col_b = split.column(align=True)
+        col_b.prop(scene, "blz_flip_direction")
         row = layout.row()
         split = row.split()
         col_a = split.column(align=True)
@@ -54,74 +62,97 @@ class BLENDUALIZER_PT_properties_ui(bpy.types.Panel):
         row = layout.row()
         split = row.split()
         col_a = split.column(align=True)
-        col_a.prop(scene, "bz_attack_time")
+        col_a.prop(scene, "blz_attack_time")
         col_b = split.column(align=True)
-        col_b.prop(scene, "bz_release_time")
+        col_b.prop(scene, "blz_release_time")
+
 
         row = layout.separator()
-        row = layout.label(text="Bars")
+        row = layout.label(text="Visualizer")
 
         row = layout.row()
         split = row.split()
         col_a = split.column(align=True)
-        col_a.label(text="Bar Set Name:")
+        col_a.label(text="Visualizer Name:")
         col_b = split.column(align=True)
-        col_b.prop(scene, "bz_custom_name")
-
+        col_b.prop(scene, "blz_custom_name")
         row = layout.row()
         split = row.split()
         col_a = split.column(align=True)
         col_a.label(text="Visualizer Shape:")
         col_b = split.column(align=True)
-        col_b.prop(scene, "bz_vis_shape")
-        col_b.enabled = not scene.bz_use_custom_mesh
+        col_b.prop(scene, "blz_vis_shape")
+        col_b.enabled = not scene.blz_use_custom_mesh
         row = layout.row()
         split = row.split()
         col_a = split.column(align=True)
-        col_a.prop(scene, "bz_use_custom_mesh")
+        col_a.prop(scene, "blz_use_custom_mesh")
         col_b = split.column(align=True)
-        col_b.prop(scene, "bz_custom_mesh")
-        col_b.enabled = scene.bz_use_custom_mesh
+        col_b.prop(scene, "blz_custom_mesh")
+        col_b.enabled = scene.blz_use_custom_mesh
 
-        row = layout.row()
-        row.prop(scene, "bz_bar_count")
-        row = layout.row()
-        split = row.split()
-        col_a = split.column(align=True)
-        col_a.prop(scene, "bz_bar_width")
-        col_b = split.column(align=True)
-        col_b.prop(scene, "bz_bar_depth")
-        col_b.enabled = self.is_shape_3d(scene.bz_vis_shape)
-        row = layout.row()
-        split = row.split()
-        col_a = split.column(align=True)
-        col_a.prop(scene, "bz_amplitude")
-        col_b = split.column(align=True)
-        col_b.prop(scene, "bz_spacing")
-        col_b.enabled = not scene.bz_use_radial
 
         row = layout.separator()
-
-        row = layout.row()
-        row.prop(scene, "bz_use_radial")
-
-        row = layout.row()
-        split = row.split()
-        col_a = split.column(align=True)
-        col_a.prop(scene, "bz_radius")
-        col_a.enabled = scene.bz_use_radial
-        col_b = split.column(align=True)
-        col_b.prop(scene, "bz_flip_direction")
-        col_b.enabled = scene.bz_use_radial
+        row = layout.label(text="Mesh")
 
         row = layout.row()
         split = row.split()
         col_a = split.column(align=True)
-        col_a.prop(scene, "bz_arc_angle")
-        col_a.enabled = scene.bz_use_radial
+        col_a.prop(scene, "blz_bar_width")
         col_b = split.column(align=True)
-        col_b.prop(scene, "bz_arc_center_offset")
-        col_b.enabled = scene.bz_use_radial
+        col_b.prop(scene, "blz_bar_depth")
+        col_b.enabled = self.is_shape_3d(scene.blz_vis_shape)
+        row = layout.row()
+        split = row.split()
+        col_a = split.column(align=True)
+        col_a.prop(scene, "blz_amplitude")
+        col_b = split.column(align=True)
+        col_b.prop(scene, "blz_spacing")
+        col_b.enabled = not scene.blz_use_radial
+
+        row = layout.separator()
+        row = layout.label(text="Curve")
+
+        row = layout.row()
+        split = row.split()
+        col_a = split.column(align=True)
+        col_a.prop(scene, "blz_curve_buffer_front")
+        col_b = split.column(align=True)
+        col_b.prop(scene, "blz_curve_buffer_front_strength")        
+        row = layout.row()
+        split = row.split()
+        col_a = split.column(align=True)
+        col_a.prop(scene, "blz_curve_buffer_end")
+        col_b = split.column(align=True)
+        col_b.prop(scene, "blz_curve_buffer_end_strength")
+        row = layout.row()
+        split = row.split()
+        col_a = split.column(align=True)
+        col_a.prop(scene, "blz_curve_buffer_between")
+        col_b = split.column(align=True)
+        col_b.prop(scene, "blz_curve_buffer_between_strength")
+
+
+        row = layout.separator()
+        row = layout.row()
+        row.label(text="Radial")
+
+        row = layout.row()
+        split = row.split()
+        col_a = split.column(align=True)
+        col_a.prop(scene, "blz_radius")
+        col_a.enabled = scene.blz_use_radial
+        col_b = split.column(align=True)
+        col_b.prop(scene, "blz_use_radial")
+
+        row = layout.row()
+        split = row.split()
+        col_a = split.column(align=True)
+        col_a.prop(scene, "blz_arc_angle")
+        col_a.enabled = scene.blz_use_radial
+        col_b = split.column(align=True)
+        col_b.prop(scene, "blz_arc_center_offset")
+        col_b.enabled = scene.blz_use_radial
 
         row = layout.separator()
 
@@ -130,7 +161,7 @@ class BLENDUALIZER_PT_properties_ui(bpy.types.Panel):
         col_a = split.column(align=True)
         col_a.label(text="Visualizer Material:")
         col_b = split.column(align=True)
-        col_b.prop(scene, "bz_material")
+        col_b.prop(scene, "blz_material")
 
         row = layout.separator()
         row = layout.label(text="Generate")
@@ -138,26 +169,39 @@ class BLENDUALIZER_PT_properties_ui(bpy.types.Panel):
         row = layout.row()
         split = row.split()
         col_a = split.column(align=True)
-        col_a.prop(scene, "bz_preview_mode")
+        col_a.prop(scene, "blz_preview_mode")
         col_b = split.column(align=True)
-        col_b.prop(scene, "bz_use_sym")
+        col_b.prop(scene, "blz_use_sym")
 
         row = layout.row()
-        row.operator("object.bz_generate", icon="FILE_REFRESH")
+        row.operator("object.blz_generate", icon="FILE_REFRESH")
 
 
 def init_prop():
-    bpy.types.Scene.bz_audio_file = bpy.props.StringProperty(
+    bpy.types.Scene.blz_audio_file = bpy.props.StringProperty(
         name="Audio Path",
         description="Define path of the audio file",
         subtype="FILE_PATH",
     )
 
-    bpy.types.Scene.bz_audio_channel = bpy.props.IntProperty(
+    bpy.types.Scene.blz_audio_channel = bpy.props.IntProperty(
         name="Audio Channel",
         description="Channel where audio will be added",
         default=1,
         min=1
+    )
+
+    bpy.types.Scene.blz_vis_object_count = bpy.props.IntProperty(
+        name="Segment Count",
+        description="The number of frequency segments to make",
+        default=64,
+        min=1
+    )
+
+    bpy.types.Scene.blz_flip_direction = bpy.props.BoolProperty(
+        name="Flip Direction",
+        description="Arrange the bars in reverse direction",
+        default=False
     )
 
     bpy.types.Scene.blz_start_freq = bpy.props.IntProperty(
@@ -176,32 +220,31 @@ def init_prop():
         max=10000
     )
 
-    bpy.types.Scene.bz_attack_time = bpy.props.FloatProperty(
+    bpy.types.Scene.blz_attack_time = bpy.props.FloatProperty(
         name="Attack Time",
         description="How long it takes for the hull curve to rise (the lower the value the steeper it can rise)",
-        default=0.005,
-        min=0,
+        default=0.1,
+        min=0.01,
         max=2
     )
 
-    bpy.types.Scene.bz_release_time = bpy.props.FloatProperty(
+    bpy.types.Scene.blz_release_time = bpy.props.FloatProperty(
         name="Release Time",
         description="How long it takes for the hull curve to fall (the lower the value the steeper it can fall)",
         default=0.2,
-        min=0,
+        min=0.01,
         max=5
     )
 
-    bpy.types.Scene.bz_custom_name = bpy.props.StringProperty(
+    bpy.types.Scene.blz_custom_name = bpy.props.StringProperty(
         name="",
-        description="Define the name",
-        default="bz_bar",
-        subtype="NONE"
+        description="The name of visualizer set. If you change the name it will make a new visualizer",
+        default="blz_visualizer"
     )
 
-    bpy.types.Scene.bz_vis_shape = bpy.props.EnumProperty(
+    bpy.types.Scene.blz_vis_shape = bpy.props.EnumProperty(
         name="",
-        description="The shape of the bars",
+        description="The shape of the visualizer",
         default="RECTANGLE",
         items=[("RECTANGLE", "Rectangle", "", "", 1),
                ("TRIANGLE", "Triangle", "", "", 2),
@@ -210,67 +253,108 @@ def init_prop():
                ('CURVE', 'Curve', '', '', 5)]
     )
 
-    bpy.types.Scene.bz_use_custom_mesh = bpy.props.BoolProperty(
+    bpy.types.Scene.blz_use_custom_mesh = bpy.props.BoolProperty(
         name="Custom Mesh",
-        description="Select mesh",
+        description="Select custom mesh. Objects are stretched in their Y direction",
         default=False
     )
 
-    bpy.types.Scene.bz_custom_mesh = bpy.props.PointerProperty(
+    bpy.types.Scene.blz_custom_mesh = bpy.props.PointerProperty(
         name="",
-        description="Mesh to use",
+        description="Select custom mesh. Objects are stretched in their Y direction",
         type=bpy.types.Mesh
     )
 
-    bpy.types.Scene.bz_bar_count = bpy.props.IntProperty(
-        name="Bar Count",
-        description="The number of bars to make",
-        default=64,
-        min=1
-    )
-
-    bpy.types.Scene.bz_bar_width = bpy.props.FloatProperty(
+    bpy.types.Scene.blz_bar_width = bpy.props.FloatProperty(
         name="Bar Width",
         description="The width of the bars",
         default=1.6,
         min=0
     )
 
-    bpy.types.Scene.bz_bar_depth = bpy.props.FloatProperty(
+    bpy.types.Scene.blz_bar_depth = bpy.props.FloatProperty(
         name="Bar Depth",
         description="The depth of the bars (3D only)",
         default=1.6,
         min=0
     )
 
-    bpy.types.Scene.bz_amplitude = bpy.props.FloatProperty(
+    bpy.types.Scene.blz_amplitude = bpy.props.FloatProperty(
         name="Amplitude",
         description="Amplitude of visualizer bars",
         default=48.0,
         min=0
     )
 
-    bpy.types.Scene.bz_spacing = bpy.props.FloatProperty(
+    bpy.types.Scene.blz_spacing = bpy.props.FloatProperty(
         name="Spacing",
         description="Spacing between bars",
         default=0.65,
         min=0
     )
 
-    bpy.types.Scene.bz_use_radial = bpy.props.BoolProperty(
+    bpy.types.Scene.blz_curve_buffer_front = bpy.props.IntProperty(
+        name="Front Buffer",
+        description="Number of buffer points infront the curve",
+        default=3,
+        min=0,
+        max=100
+    )
+
+    bpy.types.Scene.blz_curve_buffer_front_strength = bpy.props.FloatProperty(
+        name="Strength",
+        description="Strength of front buffer points faloff start (ends at 1)",
+        default=0.5,
+        min=0.01,
+        max=1
+    )
+
+    bpy.types.Scene.blz_curve_buffer_end = bpy.props.IntProperty(
+        name="End Buffer",
+        description="Number of buffer points behind the curve",
+        default=3,
+        min=0,
+        max=100
+    )
+
+    bpy.types.Scene.blz_curve_buffer_end_strength = bpy.props.FloatProperty(
+        name="Strength",
+        description="Strength of end buffer points faloff start (ends at 1)",
+        default=0.5,
+        min=0.01,
+        max=1
+    )
+
+    bpy.types.Scene.blz_curve_buffer_between = bpy.props.IntProperty(
+        name="Inbetween Buffer",
+        description="Number of buffer points between moving points of the curve",
+        default=1,
+        min=0,
+        max=100
+    )
+
+    bpy.types.Scene.blz_curve_buffer_between_strength = bpy.props.FloatProperty(
+        name="Strength",
+        description="Strength of buffer points between moving points of the curve",
+        default=0.5,
+        min=0.01,
+        max=10
+    )    
+
+    bpy.types.Scene.blz_use_radial = bpy.props.BoolProperty(
         name="Use Radial",
         description="Use a circular visualizer",
         default=False
     )
 
-    bpy.types.Scene.bz_radius = bpy.props.FloatProperty(
+    bpy.types.Scene.blz_radius = bpy.props.FloatProperty(
         name="Radius",
         description="Radius of the radial visualizer",
         default=20,
         min=0
     )
 
-    bpy.types.Scene.bz_arc_angle = bpy.props.FloatProperty(
+    bpy.types.Scene.blz_arc_angle = bpy.props.FloatProperty(
         name="Arc Angle",
         description="Angular size of the radial visualizer",
         default=360,
@@ -278,35 +362,29 @@ def init_prop():
         max=360
     )
 
-    bpy.types.Scene.bz_arc_center_offset = bpy.props.FloatProperty(
+    bpy.types.Scene.blz_arc_center_offset = bpy.props.FloatProperty(
         name="Arc Rotation",
         description="Angle where radial visualizer is centered",
         default=0,
-        min=-180,
-        max=180
+        min=-360,
+        max=360
     )
 
-    bpy.types.Scene.bz_flip_direction = bpy.props.BoolProperty(
-        name="Flip Direction",
-        description="Arrange the bars in reverse direction",
-        default=False
-    )
-
-    bpy.types.Scene.bz_use_sym = bpy.props.BoolProperty(
+    bpy.types.Scene.blz_use_sym = bpy.props.BoolProperty(
         name="Use Symmetry",
         description="Visualizer is reflected over Y axis",
         default=False
     )
 
-    bpy.types.Scene.bz_material = bpy.props.PointerProperty(
+    bpy.types.Scene.blz_material = bpy.props.PointerProperty(
         name="",
         description="Material to be applied to bars",
         type=bpy.types.Material
     )
 
-    bpy.types.Scene.bz_preview_mode = bpy.props.BoolProperty(
+    bpy.types.Scene.blz_preview_mode = bpy.props.BoolProperty(
         name="Preview Mode",
-        description="Generate bars without animation",
+        description="Generate visualizer without animation",
         default=False
     )
 

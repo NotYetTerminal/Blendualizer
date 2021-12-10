@@ -4,9 +4,28 @@ Blender Music Visualizer.
 
 Same use as the Bizualizer addon.
 
-
+=======
 
 ## History
+
+### v0.3
+
+
+Blender Version 2.93+
+
+
+Added:
+
+Can now make a curve as a visualizer
+
+====
+
+Rmoved:
+
+Bug where radial symmetry would not work
+
+Bug where line start wasn't calculated properly and broke flip direction
+
 
 ### v0.2
 ====

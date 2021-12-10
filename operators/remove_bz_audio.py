@@ -1,14 +1,14 @@
 import bpy
 
 class BLENDUALIZER_OT_remove_audio_from_vse(bpy.types.Operator):
-    bl_idname = "sequencerextra.bz_audio_remove"
+    bl_idname = "sequencerextra.blz_audio_remove"
     bl_label = "Remove Audio"
     bl_description = "Adds the audio file to the VSE"
 
     @classmethod
     def poll(self, context):
         scene = context.scene
-        if scene.bz_audio_file == "":
+        if scene.blz_audio_file == "":
             return False
         else:
             return True
@@ -20,7 +20,7 @@ class BLENDUALIZER_OT_remove_audio_from_vse(bpy.types.Operator):
         if not scene.sequence_editor:
             return {"FINISHED"}
 
-        audiofile_name = bpy.path.abspath(scene.bz_audio_file).split('\\')[-1].split('.')[0]
+        audiofile_name = bpy.path.abspath(scene.blz_audio_file).split('\\')[-1].split('.')[0]
 
         for seqs in scene.sequence_editor.sequences:
             if seqs.type == "SOUND" and seqs.sound.name.split('.')[0] == audiofile_name:

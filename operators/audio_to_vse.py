@@ -1,31 +1,31 @@
 import bpy
 
 class BLENDUALIZER_OT_audio_to_vse(bpy.types.Operator):
-    bl_idname = "sequencerextra.bz_audio_to_sequencer"
+    bl_idname = "sequencerextra.blz_audio_to_sequencer"
     bl_label = "Add Audio to VSE"
     bl_description = "Adds the audio file to the VSE"
 
     @classmethod
     def poll(self, context):
         scene = context.scene
-        if scene.bz_audio_file == "":
+        if scene.blz_audio_file == "":
             return False
         else:
             return True
 
     def execute(self, context):
-        bpy.ops.sequencerextra.bz_audio_remove()
+        bpy.ops.sequencerextra.blz_audio_remove()
 
         scene = context.scene
-        audiofile = bpy.path.abspath(scene.bz_audio_file)
+        audiofile = bpy.path.abspath(scene.blz_audio_file)
         name = audiofile.split('\\')[-1]
-        chan = scene.bz_audio_channel
+        chan = scene.blz_audio_channel
         start = 1
         if not scene.sequence_editor:
             scene.sequence_editor_create()
 
         scene.sequence_editor.sequences.new_sound(
-            "bz_" + name, audiofile, chan, start)
+            "blz_" + name, audiofile, chan, start)
 
         frame_start = 300000
         frame_end = -300000
