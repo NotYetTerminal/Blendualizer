@@ -5,9 +5,9 @@ bl_info = {
     "name": "Blendualizer",
     "description": "Audio Visualizer Creator",
     "author": "532stary4",
-    "version": (0, 3, 0),
-    "blender": (2, 93, 0),
-    "wiki_url": "https://github.com/532stary4/Blendualizer",
+    "version": (0, 4, 0),
+    "blender": (3, 0, 0),
+    "doc_url": "https://github.com/532stary4/Blendualizer",
     "tracker_url": "https://github.com/532stary4/Blendualizer/issues",
     "category": "Animation",
     "location": "Properties > Scene"}
