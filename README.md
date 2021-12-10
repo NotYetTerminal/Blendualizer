@@ -8,7 +8,7 @@ Same use as the Bizualizer addon.
 
 Look at changelog.md for all the changes.
 
-Added:
+## Added:
 
 Use curves as visualizer.
 
