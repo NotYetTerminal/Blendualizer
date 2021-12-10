@@ -66,7 +66,11 @@ class BLENDUALIZER_OT_generate_visualizer(bpy.types.Operator):
 
         vis_object_with_buffer_between = vis_object_count * (curve_buffer_between + 1) - curve_buffer_between
         self.total_object_count = vis_object_with_buffer_between + curve_buffer_end + curve_buffer_front
-        self.line_start = self.flip_direction * (self.total_object_count * self.spacing) / 2 + self.spacing / 2
+        self.line_start = self.flip_direction * (((self.total_object_count * self.spacing) / 2) - (self.spacing / 2))
+        ''' + (self.spacing / 2))'''
+        print(self.line_start)
+        print(self.flip_direction)
+        print(self.total_object_count * self.spacing)
 
         preview_coef = 8 * math.pi / vis_object_count
         preview_mode = scene.blz_preview_mode
